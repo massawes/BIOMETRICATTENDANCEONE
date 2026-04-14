@@ -1,0 +1,31 @@
+# Environment and secrets
+.env
+.env.backup
+.env.production
+/auth.json
+
+# Dependencies and build output
+/node_modules
+/vendor
+/public/build
+/public/hot
+/public/storage
+
+# Application/runtime artifacts
+*.log
+.phpactor.json
+.phpunit.result.cache
+/.phpunit.cache
+/storage/*.key
+/storage/pail
+
+# Editor and OS files
+.DS_Store
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+Homestead.json
+Homestead.yaml
+Thumbs.db
