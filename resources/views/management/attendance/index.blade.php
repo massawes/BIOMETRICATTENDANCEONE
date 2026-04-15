@@ -26,6 +26,7 @@
                     <thead>
                         <tr>
                             <th>Student</th>
+                            <th>Admin Number</th>
                             <th>Module</th>
                             <th>Academic Year</th>
                             <th>Date</th>
@@ -37,6 +38,7 @@
                         @forelse ($attendances as $attendance)
                             <tr>
                                 <td>{{ $attendance->student?->student_name }}</td>
+                                <td>{{ $attendance->student?->admin_number ?? '-' }}</td>
                                 <td>{{ $attendance->moduleDistribution?->module?->module_name }}</td>
                                 <td>{{ $attendance->academic_year }}</td>
                                 <td>{{ $attendance->date }}</td>
@@ -56,7 +58,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center">No attendance records found.</td>
+                                <td colspan="7" class="text-center">No manual attendance records found.</td>
                             </tr>
                         @endforelse
                     </tbody>
