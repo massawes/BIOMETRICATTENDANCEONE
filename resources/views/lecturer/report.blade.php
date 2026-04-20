@@ -90,14 +90,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="lecturer-stat card">
-                        <div class="card-body p-3">
-                            <div class="text-muted small text-uppercase fw-semibold">Attendance Rate</div>
-                            <div class="fs-3 fw-bold mb-0">{{ number_format((float) ($summary->attendance_rate ?? 0), 2) }}%</div>
-                        </div>
-                    </div>
-                </div>
+              
             </div>
 
             <div class="lecturer-card card">

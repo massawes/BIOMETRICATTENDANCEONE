@@ -28,7 +28,7 @@ Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 /* Set these to your desired credentials. */
 const char *ssid = "CYBER";
 const char *password = "123456789";
-const char* device_uid  = "46fe2bbb11e9723c";
+const char* device_uid  = "a8d832ed";
 //************************************************************************
 String API_BASE_URL = "http://192.168.1.10/api/esp32";
 //************************************************************************

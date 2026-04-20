@@ -36,7 +36,7 @@
                             <select name="department_id" id="department_id" class="form-select">
                                 <option value="">All Departments</option>
                                 @foreach ($departments as $department)
-                                    <option value="{{ $department->id }}" @selected(request('department_id') == $department->id)>{{ $department->department_name }}</option>
+                                    <option value="{{ $department->id }}" @selected((string) $selectedDepartmentId === (string) $department->id)>{{ $department->department_name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -46,7 +46,11 @@
                         <select name="program_id" id="program_id" class="form-select">
                             <option value="">All Programs</option>
                             @foreach ($programs as $program)
-                                <option value="{{ $program->id }}" @selected(request('program_id') == $program->id)>{{ $program->program_name }}</option>
+                                <option value="{{ $program->id }}"
+                                    data-department-id="{{ $program->department_id }}"
+                                    @selected((string) $selectedProgramId === (string) $program->id)>
+                                    {{ $program->program_name }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -57,7 +61,8 @@
                             @foreach ($modules as $module)
                                 <option value="{{ $module->id }}"
                                     data-program-id="{{ $module->program_id }}"
-                                    @selected(request('module_id') == $module->id)>
+                                    data-department-id="{{ $module->department_id }}"
+                                    @selected((string) $selectedModuleId === (string) $module->id)>
                                     {{ $module->module_name }}
                                 </option>
                             @endforeach
@@ -75,18 +80,18 @@
             <div class="col-md-6 col-xl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body p-4">
-                        <div class="text-muted text-uppercase small fw-bold mb-2">Students in Scope</div>
+                        <div class="text-muted text-uppercase small fw-bold mb-2">Students Recorded</div>
                         <h2 class="fw-bold mb-1">{{ $totalStudents }}</h2>
-                        <div class="text-muted small">Students covered by current filters</div>
+                        <div class="text-muted small">Students found in current attendance records</div>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 col-xl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body p-4">
-                        <div class="text-muted text-uppercase small fw-bold mb-2">Attendance Rate</div>
-                        <h2 class="fw-bold mb-1 text-primary">{{ $attendanceRate }}%</h2>
-                        <div class="text-muted small">{{ $present }} present out of {{ $totalRecords }} records</div>
+                        <div class="text-muted text-uppercase small fw-bold mb-2">Present Records</div>
+                        <h2 class="fw-bold mb-1 text-success">{{ $present }}</h2>
+                        <div class="text-muted small">{{ $attendanceRate }}% attendance from {{ $totalRecords }} records</div>
                     </div>
                 </div>
             </div>
@@ -329,29 +334,56 @@
             }
         });
 
+        const departmentSelect = document.getElementById('department_id');
         const programSelect = document.getElementById('program_id');
         const moduleSelect = document.getElementById('module_id');
+        const lockedDepartmentId = @json((string) ($selectedDepartmentId ?? ''));
 
         if (programSelect && moduleSelect) {
-            const moduleOptions = Array.from(moduleSelect.querySelectorAll('option[data-program-id]'));
+            const programOptions = Array.from(programSelect.querySelectorAll('option[data-department-id]'));
+            const moduleOptions = Array.from(moduleSelect.querySelectorAll('option[data-department-id]'));
+            const getSelectedDepartmentId = () => departmentSelect ? departmentSelect.value : lockedDepartmentId;
 
-            const syncModules = () => {
-                const selectedProgramId = programSelect.value;
-                const selectedModuleOption = moduleSelect.selectedOptions[0];
+            const syncPrograms = () => {
+                const selectedDepartmentId = getSelectedDepartmentId();
 
-                moduleOptions.forEach((option) => {
-                    const matchesProgram = !selectedProgramId || option.dataset.programId === selectedProgramId;
-                    option.hidden = !matchesProgram;
-                    option.disabled = !matchesProgram;
+                programOptions.forEach((option) => {
+                    const matchesDepartment = !selectedDepartmentId || option.dataset.departmentId === selectedDepartmentId;
+                    option.hidden = !matchesDepartment;
+                    option.disabled = !matchesDepartment;
                 });
 
-                if (selectedModuleOption && selectedModuleOption.dataset.programId !== selectedProgramId) {
+                if (programSelect.selectedOptions[0]?.disabled) {
+                    programSelect.value = '';
+                }
+            };
+
+            const syncModules = () => {
+                const selectedDepartmentId = getSelectedDepartmentId();
+                const selectedProgramId = programSelect.value;
+
+                moduleOptions.forEach((option) => {
+                    const matchesDepartment = !selectedDepartmentId || option.dataset.departmentId === selectedDepartmentId;
+                    const matchesProgram = !selectedProgramId || option.dataset.programId === selectedProgramId;
+                    const isVisible = matchesDepartment && matchesProgram;
+
+                    option.hidden = !isVisible;
+                    option.disabled = !isVisible;
+                });
+
+                if (moduleSelect.selectedOptions[0]?.disabled) {
                     moduleSelect.value = '';
                 }
             };
 
+            const syncFilters = () => {
+                syncPrograms();
+                syncModules();
+            };
+
+            departmentSelect?.addEventListener('change', syncFilters);
             programSelect.addEventListener('change', syncModules);
-            syncModules();
+            syncFilters();
         }
     </script>
 @endsection

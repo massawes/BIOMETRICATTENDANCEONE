@@ -24,6 +24,32 @@ class AnalyticsController extends Controller
             $selectedDepartmentId = $hodDepartmentId;
         }
 
+        if ($selectedProgramId) {
+            $programDepartmentId = DB::table('programs')
+                ->where('id', $selectedProgramId)
+                ->value('department_id');
+
+            if (!$programDepartmentId || ($selectedDepartmentId && (string) $programDepartmentId !== (string) $selectedDepartmentId)) {
+                $selectedProgramId = null;
+            }
+        }
+
+        if ($selectedModuleId) {
+            $moduleScope = DB::table('modules as m')
+                ->join('programs as p', 'm.program_id', '=', 'p.id')
+                ->where('m.id', $selectedModuleId)
+                ->select('m.program_id', 'p.department_id')
+                ->first();
+
+            if (
+                !$moduleScope
+                || ($selectedDepartmentId && (string) $moduleScope->department_id !== (string) $selectedDepartmentId)
+                || ($selectedProgramId && (string) $moduleScope->program_id !== (string) $selectedProgramId)
+            ) {
+                $selectedModuleId = null;
+            }
+        }
+
         $attendanceBase = DB::table('attendances as a')
             ->join('students as s', 'a.student_id', '=', 's.id')
             ->join('users as u', 's.user_id', '=', 'u.id')
@@ -33,42 +59,35 @@ class AnalyticsController extends Controller
             ->join('departments as d', 'p.department_id', '=', 'd.id')
             ->leftJoin('weeks as w', 'a.week_id', '=', 'w.id');
 
-        $studentsBase = DB::table('students as s')
-            ->join('users as u', 's.user_id', '=', 'u.id')
-            ->join('programs as p', 's.program_id', '=', 'p.id')
-            ->join('departments as d', 'p.department_id', '=', 'd.id');
-
         if ($selectedDepartmentId) {
             $attendanceBase->where('d.id', $selectedDepartmentId);
-            $studentsBase->where('d.id', $selectedDepartmentId);
         }
 
         if ($selectedProgramId) {
             $attendanceBase->where('p.id', $selectedProgramId);
-            $studentsBase->where('p.id', $selectedProgramId);
         }
 
         if ($selectedModuleId) {
             $attendanceBase->where('m.id', $selectedModuleId);
         }
 
-        $totalStudents = (clone $studentsBase)->distinct('s.id')->count('s.id');
-        $totalRecords = (clone $attendanceBase)->count();
-        $present = (clone $attendanceBase)->where('a.is_present', 1)->count();
+        $summary = (clone $attendanceBase)
+            ->selectRaw('COUNT(a.id) as total_records')
+            ->selectRaw('SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) as present_records')
+            ->selectRaw('COUNT(DISTINCT s.id) as total_students')
+            ->first();
+
+        $totalStudents = (int) ($summary->total_students ?? 0);
+        $totalRecords = (int) ($summary->total_records ?? 0);
+        $present = (int) ($summary->present_records ?? 0);
         $absent = $totalRecords - $present;
         $attendanceRate = $totalRecords > 0 ? round(($present / $totalRecords) * 100, 1) : 0;
 
-        $atRiskStudents = DB::table('attendances as a')
-            ->join('students as s', 'a.student_id', '=', 's.id')
-            ->join('programs as p', 's.program_id', '=', 'p.id')
-            ->join('departments as d', 'p.department_id', '=', 'd.id')
-            ->when($selectedDepartmentId, fn ($query) => $query->where('d.id', $selectedDepartmentId))
-            ->when($selectedProgramId, fn ($query) => $query->where('p.id', $selectedProgramId))
-            ->when($selectedModuleId, function ($query) use ($selectedModuleId) {
-                $query->join('module_distributions as md', 'a.module_distribution_id', '=', 'md.id')
-                    ->where('md.module_id', $selectedModuleId);
-            })
-            ->select('s.id', DB::raw('ROUND((SUM(a.is_present) / COUNT(a.id)) * 100, 1) as attendance_percentage'))
+        $atRiskStudents = (clone $attendanceBase)
+            ->select(
+                's.id',
+                DB::raw('ROUND((SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) / COUNT(a.id)) * 100, 1) as attendance_percentage')
+            )
             ->groupBy('s.id')
             ->having('attendance_percentage', '<', 75)
             ->get()
@@ -78,8 +97,8 @@ class AnalyticsController extends Controller
             ->select(
                 'p.program_name',
                 DB::raw('COUNT(a.id) as total_records'),
-                DB::raw('SUM(a.is_present) as present_records'),
-                DB::raw('ROUND((SUM(a.is_present) / COUNT(a.id)) * 100, 1) as attendance_percentage')
+                DB::raw('SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) as present_records'),
+                DB::raw('ROUND((SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) / COUNT(a.id)) * 100, 1) as attendance_percentage')
             )
             ->groupBy('p.id', 'p.program_name')
             ->orderByDesc('attendance_percentage')
@@ -89,8 +108,8 @@ class AnalyticsController extends Controller
             ->select(
                 'm.module_name',
                 DB::raw('COUNT(a.id) as total_records'),
-                DB::raw('SUM(a.is_present) as present_records'),
-                DB::raw('ROUND((SUM(a.is_present) / COUNT(a.id)) * 100, 1) as attendance_percentage')
+                DB::raw('SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) as present_records'),
+                DB::raw('ROUND((SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) / COUNT(a.id)) * 100, 1) as attendance_percentage')
             )
             ->groupBy('m.id', 'm.module_name')
             ->orderByDesc('attendance_percentage')
@@ -102,8 +121,8 @@ class AnalyticsController extends Controller
                 DB::raw('COALESCE(w.week_name, CONCAT("Week ", a.week_id)) as week_label'),
                 DB::raw('MIN(a.week_id) as week_sort'),
                 DB::raw('COUNT(a.id) as total_records'),
-                DB::raw('SUM(a.is_present) as present_records'),
-                DB::raw('ROUND((SUM(a.is_present) / COUNT(a.id)) * 100, 1) as attendance_percentage')
+                DB::raw('SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) as present_records'),
+                DB::raw('ROUND((SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) / COUNT(a.id)) * 100, 1) as attendance_percentage')
             )
             ->whereNotNull('a.week_id')
             ->groupBy('week_label')
@@ -111,20 +130,12 @@ class AnalyticsController extends Controller
             ->get();
 
         $departmentStats = $canFilterDepartment
-            ? DB::table('attendances as a')
-                ->join('students as s', 'a.student_id', '=', 's.id')
-                ->join('programs as p', 's.program_id', '=', 'p.id')
-                ->join('departments as d', 'p.department_id', '=', 'd.id')
-                ->when($selectedProgramId, fn ($query) => $query->where('p.id', $selectedProgramId))
-                ->when($selectedModuleId, function ($query) use ($selectedModuleId) {
-                    $query->join('module_distributions as md', 'a.module_distribution_id', '=', 'md.id')
-                        ->where('md.module_id', $selectedModuleId);
-                })
+            ? (clone $attendanceBase)
                 ->select(
                     'd.department_name',
                     DB::raw('COUNT(a.id) as total_records'),
-                    DB::raw('SUM(a.is_present) as present_records'),
-                    DB::raw('ROUND((SUM(a.is_present) / COUNT(a.id)) * 100, 1) as attendance_percentage')
+                    DB::raw('SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) as present_records'),
+                    DB::raw('ROUND((SUM(CASE WHEN a.is_present = 1 THEN 1 ELSE 0 END) / COUNT(a.id)) * 100, 1) as attendance_percentage')
                 )
                 ->groupBy('d.id', 'd.department_name')
                 ->orderByDesc('attendance_percentage')
@@ -139,15 +150,14 @@ class AnalyticsController extends Controller
             : collect();
 
         $programs = DB::table('programs')
-            ->when($selectedDepartmentId, fn ($query) => $query->where('department_id', $selectedDepartmentId))
+            ->when($isHod && $selectedDepartmentId, fn ($query) => $query->where('department_id', $selectedDepartmentId))
             ->orderBy('program_name')
             ->get();
 
         $modules = DB::table('modules as m')
             ->join('programs as p', 'm.program_id', '=', 'p.id')
-            ->when($selectedDepartmentId, fn ($query) => $query->where('p.department_id', $selectedDepartmentId))
-            ->when($selectedProgramId, fn ($query) => $query->where('p.id', $selectedProgramId))
-            ->select('m.id', 'm.module_name', 'm.program_id')
+            ->when($isHod && $selectedDepartmentId, fn ($query) => $query->where('p.department_id', $selectedDepartmentId))
+            ->select('m.id', 'm.module_name', 'm.program_id', 'p.department_id')
             ->orderBy('m.module_name')
             ->get();
 
@@ -173,7 +183,10 @@ class AnalyticsController extends Controller
             'lowModules',
             'scopeLabel',
             'isHod',
-            'canFilterDepartment'
+            'canFilterDepartment',
+            'selectedDepartmentId',
+            'selectedProgramId',
+            'selectedModuleId'
         ));
     }
 }

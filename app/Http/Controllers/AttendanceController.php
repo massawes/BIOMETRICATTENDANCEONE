@@ -196,24 +196,6 @@ class AttendanceController extends Controller
             ->where('admin_number', $adminNumber)
             ->first();
 
-        if (! $student && $adminNumber !== '') {
-            $student = (clone $studentQuery)
-                ->where('admin_number', 'like', $adminNumber . '%')
-                ->first();
-
-            if (! $student) {
-                $matchedStudents = (clone $studentQuery)
-                    ->where('admin_number', 'like', '%' . $adminNumber . '%')
-                    ->get();
-
-                if ($matchedStudents->count() === 1) {
-                    $student = $matchedStudents->first();
-                } elseif ($matchedStudents->count() > 1) {
-                    return back()->with('error', 'More than one student matches that admin number. Keep typing the full number.');
-                }
-            }
-        }
-
         if (! $student) {
             return back()->with('error', 'Student not found for that admin number.');
         }

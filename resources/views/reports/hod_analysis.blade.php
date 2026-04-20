@@ -69,7 +69,7 @@
     @if ($hasAnyFilter)
         <div class="printable-area">
             <div class="row g-2 mb-3">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="card border-0 shadow-sm rounded-4">
                         <div class="card-body p-3">
                             <div class="text-muted small text-uppercase fw-semibold mb-1">Records</div>
@@ -77,19 +77,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="card border-0 shadow-sm rounded-4">
                         <div class="card-body p-3">
                             <div class="text-muted small text-uppercase fw-semibold mb-1">Present</div>
                             <div class="fs-3 fw-bold text-dark">{{ (int) ($summary->present_records ?? 0) }}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm rounded-4">
-                        <div class="card-body p-3">
-                            <div class="text-muted small text-uppercase fw-semibold mb-1">Attendance</div>
-                            <div class="fs-3 fw-bold text-dark">{{ number_format((float) ($summary->attendance_rate ?? 0), 2) }}%</div>
                         </div>
                     </div>
                 </div>
@@ -103,7 +95,6 @@
                                 <th class="ps-4">Student</th>
                                 <th>Subject</th>
                                 <th>Week</th>
-                                <th class="text-end">Attendance</th>
                                 <th class="text-end pe-4">Status</th>
                             </tr>
                         </thead>
@@ -113,7 +104,6 @@
                                     <td class="ps-4 fw-semibold text-dark">{{ $record->student_name }}</td>
                                     <td class="text-muted">{{ $record->module_name }}</td>
                                     <td class="text-muted">{{ $record->week_name ?? 'N/A' }}</td>
-                                    <td class="text-end text-muted">{{ number_format((float) $record->percentage, 2) }}%</td>
                                     <td class="text-end pe-4">
                                         <span class="badge rounded-pill {{ $record->percentage >= 75 ? 'text-bg-success' : 'text-bg-danger' }} px-3 py-2">
                                             {{ $record->percentage >= 75 ? 'Clear' : 'Review' }}
@@ -122,7 +112,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">No matching data found.</td>
+                                    <td colspan="4" class="text-center py-4 text-muted">No matching data found.</td>
                                 </tr>
                             @endforelse
                         </tbody>

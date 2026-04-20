@@ -47,7 +47,7 @@
                             @if(!$selectedWeek || !$selectedCourse || !$selectedDay || !$selectedSubject)
                                 Select week, course, day, and subject first, then type or scan the student admin number here.
                             @else
-                                Auto search is active here. As soon as the admin number matches a student in this class, the system marks them present automatically.
+                                Type or scan the full admin number. The system will search after you finish typing.
                             @endif
                         </div>
                     </div>
@@ -267,34 +267,12 @@
             feedback.textContent = message;
         };
 
-        const findMatch = (rawValue) => {
+        const findExactMatch = (rawValue) => {
             const value = rawValue.trim();
             if (!value) return null;
 
             if (adminNumberSet.has(value)) {
                 return value;
-            }
-
-            if (value.length < 3) {
-                return null;
-            }
-
-            const prefixMatches = adminNumbers.filter((number) => number.startsWith(value));
-            if (prefixMatches.length === 1) {
-                return prefixMatches[0];
-            }
-
-            if (prefixMatches.length > 1) {
-                return '__ambiguous__';
-            }
-
-            const containsMatches = adminNumbers.filter((number) => number.includes(value));
-            if (containsMatches.length === 1) {
-                return containsMatches[0];
-            }
-
-            if (containsMatches.length > 1) {
-                return '__ambiguous__';
             }
 
             return null;
@@ -310,9 +288,9 @@
                 return;
             }
 
-            const match = findMatch(value);
+            const match = findExactMatch(value);
 
-            if (match && match !== '__ambiguous__') {
+            if (match) {
                 if (quickInput.value !== match) {
                     quickInput.value = match;
                 }
@@ -323,11 +301,6 @@
                 return;
             }
 
-            if (match === '__ambiguous__') {
-                setFeedback('More than one student matches this number. Keep typing the full admin number.', 'warning');
-                return;
-            }
-
             if (forceSubmit) {
                 submitting = true;
                 setFeedback('Searching on the server...', 'info');
@@ -335,7 +308,7 @@
                 return;
             }
 
-            setFeedback('Keep typing or scan the full number. Search will submit once there is a clear match.', 'info');
+            setFeedback('Student not found for that admin number.', 'warning');
         };
 
         if (quickForm) {
@@ -356,7 +329,7 @@
                 clearTimeout(debounceTimer);
             }
 
-            debounceTimer = setTimeout(() => tryAutoMark(false), 250);
+            debounceTimer = setTimeout(() => tryAutoMark(false), 900);
         });
 
         quickInput.addEventListener('change', () => {
