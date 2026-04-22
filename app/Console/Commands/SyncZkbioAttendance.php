@@ -48,9 +48,6 @@ class SyncZkbioAttendance extends Command
                 ->copy()
                 ->timezone(config('app.timezone'))
                 ->toDateTimeString();
-            $handledTransactionIds = DB::table('zkbio_attendance_syncs')
-                ->pluck('zkbio_transaction_id')
-                ->all();
 
             $logs = DB::table('iclock_transaction')
                 ->select([
@@ -65,8 +62,10 @@ class SyncZkbioAttendance extends Command
                 ])
                 ->where('is_attendance', 1)
                 ->where('punch_time', '>=', $sessionStartedAt)
-                ->when($handledTransactionIds, function ($query) use ($handledTransactionIds) {
-                    $query->whereNotIn('id', $handledTransactionIds);
+                ->whereNotExists(function ($query) {
+                    $query->selectRaw('1')
+                        ->from('zkbio_attendance_syncs')
+                        ->whereColumn('zkbio_attendance_syncs.zkbio_transaction_id', 'iclock_transaction.id');
                 })
                 ->when($this->option('since'), function ($query, string $since) {
                     $query->where('punch_time', '>=', $since);

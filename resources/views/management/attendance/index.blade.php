@@ -109,70 +109,80 @@
                     <h5 class="mb-0">Latest Face 990 / ZKBio Scans Today</h5>
                     <small class="text-muted">Raw device scans from ZKBio Time before they are converted into class attendance.</small>
                 </div>
-                <span class="badge bg-primary">{{ $latestZkbioLogs->count() }}</span>
+                @if ($showRawZkbioLogs)
+                    <span class="badge bg-primary">{{ $latestZkbioLogs->count() }}</span>
+                @else
+                    <a href="{{ route('attendance.records.index', array_merge(request()->query(), ['show_raw_logs' => 1])) }}" class="btn btn-sm btn-outline-primary">
+                        View Raw Scans
+                    </a>
+                @endif
             </div>
             <div class="card-body table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Transaction</th>
-                            <th>Emp Code</th>
-                            <th>Student</th>
-                            <th>Scan Time</th>
-                            <th>Terminal</th>
-                            <th>Sync</th>
-                            <th>Attendance</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($latestZkbioLogs as $log)
-                            @php
-                                $matchedStudent = $zkbioStudentMap->get((string) $log->emp_code);
-                                $sync = $zkbioSyncMap->get($log->id);
-                                $syncStatus = $sync->status ?? 'not synced';
-                                $syncClass = [
-                                    'synced' => 'success',
-                                    'skipped' => 'warning',
-                                    'error' => 'danger',
-                                    'not synced' => 'secondary',
-                                ][$syncStatus] ?? 'secondary';
-                            @endphp
+                @if ($showRawZkbioLogs)
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
                             <tr>
-                                <td>{{ $log->id }}</td>
-                                <td>{{ $log->emp_code }}</td>
-                                <td>
-                                    @if ($matchedStudent)
-                                        {{ $matchedStudent->student_name }}
-                                        <div class="small text-muted">{{ $matchedStudent->admin_number ?? '-' }}</div>
-                                    @else
-                                        <span class="text-muted">Not matched</span>
-                                    @endif
-                                </td>
-                                <td>{{ $log->punch_time }}</td>
-                                <td>{{ $log->terminal_sn ?? '-' }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $syncClass }}">{{ ucfirst($syncStatus) }}</span>
-                                    @if (! empty($sync?->message))
-                                        <div class="small text-muted">{{ $sync->message }}</div>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if (! empty($sync?->attendance_id))
-                                        <span class="badge bg-light text-dark">#{{ $sync->attendance_id }}</span>
-                                    @elseif ($syncStatus === 'synced')
-                                        <span class="text-muted small">Duplicate scan</span>
-                                    @else
-                                        <span class="text-muted small">-</span>
-                                    @endif
-                                </td>
+                                <th>Transaction</th>
+                                <th>Emp Code</th>
+                                <th>Student</th>
+                                <th>Scan Time</th>
+                                <th>Terminal</th>
+                                <th>Sync</th>
+                                <th>Attendance</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted">No Face 990 / ZKBio scans found today.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($latestZkbioLogs as $log)
+                                @php
+                                    $matchedStudent = $zkbioStudentMap->get((string) $log->emp_code);
+                                    $sync = $zkbioSyncMap->get($log->id);
+                                    $syncStatus = $sync->status ?? 'not synced';
+                                    $syncClass = [
+                                        'synced' => 'success',
+                                        'skipped' => 'warning',
+                                        'error' => 'danger',
+                                        'not synced' => 'secondary',
+                                    ][$syncStatus] ?? 'secondary';
+                                @endphp
+                                <tr>
+                                    <td>{{ $log->id }}</td>
+                                    <td>{{ $log->emp_code }}</td>
+                                    <td>
+                                        @if ($matchedStudent)
+                                            {{ $matchedStudent->student_name }}
+                                            <div class="small text-muted">{{ $matchedStudent->admin_number ?? '-' }}</div>
+                                        @else
+                                            <span class="text-muted">Not matched</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $log->punch_time }}</td>
+                                    <td>{{ $log->terminal_sn ?? '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $syncClass }}">{{ ucfirst($syncStatus) }}</span>
+                                        @if (! empty($sync?->message))
+                                            <div class="small text-muted">{{ $sync->message }}</div>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if (! empty($sync?->attendance_id))
+                                            <span class="badge bg-light text-dark">#{{ $sync->attendance_id }}</span>
+                                        @elseif ($syncStatus === 'synced')
+                                            <span class="text-muted small">Duplicate scan</span>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">No Face 990 / ZKBio scans found today.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                @else
+                    <div class="text-muted small">Raw scans are hidden so this page loads faster.</div>
+                @endif
             </div>
         </div>
     </div>

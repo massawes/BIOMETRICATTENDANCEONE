@@ -433,64 +433,6 @@
         </div>
     </div>
 
-    @auth
-        @if (request()->routeIs(
-            'studentdashboard',
-            'lecturerdashboard',
-            'hoddashboard',
-            'registrardashboard',
-            'examdashboard',
-            'qadashboard',
-            'directordashboard',
-            'rectordashboard',
-            'analytics.dashboard',
-            'management.attendance-report',
-            'attendanceindex',
-            'attendance.records.*'
-        ))
-            <script>
-                (() => {
-                    const key = `zkbio:last-sync:${location.pathname}`;
-                    const url = @json(route('zkbio.realtime-sync'));
-
-                    async function syncZkbio() {
-                        try {
-                            const response = await fetch(url, {
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                },
-                                cache: 'no-store',
-                            });
-
-                            if (!response.ok) {
-                                return;
-                            }
-
-                            const payload = await response.json();
-                            const latest = Number(payload.latest_transaction_id || 0);
-                            const previous = Number(sessionStorage.getItem(key) || 0);
-
-                            if (!previous) {
-                                sessionStorage.setItem(key, latest);
-                                return;
-                            }
-
-                            if (latest > previous) {
-                                sessionStorage.setItem(key, latest);
-                                location.reload();
-                            }
-                        } catch (error) {
-                            // Keep the page usable if the sync endpoint is temporarily unavailable.
-                        }
-                    }
-
-                    syncZkbio();
-                    setInterval(syncZkbio, 5000);
-                })();
-            </script>
-        @endif
-    @endauth
 </body>
 
 </html>

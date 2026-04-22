@@ -404,6 +404,44 @@
                 playAttendanceSuccessSound();
             }, 120);
         }
+
+        const hasActiveBiometricSession = @json((bool) $activeBiometricSession);
+        const zkbioSyncUrl = @json(route('zkbio.realtime-sync'));
+
+        if (hasActiveBiometricSession) {
+            let syncingZkbio = false;
+
+            const syncCurrentBiometricSession = async () => {
+                if (syncingZkbio || document.hidden) return;
+
+                syncingZkbio = true;
+
+                try {
+                    const response = await fetch(zkbioSyncUrl, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        cache: 'no-store',
+                    });
+
+                    if (!response.ok) return;
+
+                    const payload = await response.json();
+
+                    if (payload.changed) {
+                        location.reload();
+                    }
+                } catch (error) {
+                    // Keep manual attendance usable if ZKBio is temporarily busy.
+                } finally {
+                    syncingZkbio = false;
+                }
+            };
+
+            window.setTimeout(syncCurrentBiometricSession, 800);
+            window.setInterval(syncCurrentBiometricSession, 3000);
+        }
     });
 </script>
 @endsection

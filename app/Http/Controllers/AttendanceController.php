@@ -360,6 +360,7 @@ class AttendanceController extends Controller
     {
         $hasAttendanceSource = Schema::hasColumn('attendances', 'attendance_source');
         $sourceFilter = $hasAttendanceSource ? $request->input('source', 'all') : 'all';
+        $showRawZkbioLogs = $request->boolean('show_raw_logs');
         $latestZkbioLogs = collect();
         $zkbioStudentMap = collect();
         $zkbioSyncMap = collect();
@@ -398,7 +399,7 @@ class AttendanceController extends Controller
             ->latest()
             ->paginate(15);
 
-        if (Schema::hasTable('iclock_transaction')) {
+        if ($showRawZkbioLogs && Schema::hasTable('iclock_transaction')) {
             $latestZkbioLogs = DB::table('iclock_transaction')
                 ->select('id', 'emp_code', 'punch_time', 'terminal_sn', 'verify_type', 'is_attendance')
                 ->where('is_attendance', 1)
@@ -465,6 +466,7 @@ class AttendanceController extends Controller
             'attendances',
             'hasAttendanceSource',
             'sourceFilter',
+            'showRawZkbioLogs',
             'latestZkbioLogs',
             'zkbioStudentMap',
             'zkbioSyncMap'
