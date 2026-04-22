@@ -1,0 +1,63 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    /* background: #f4f6f9; */
+    background: #ffc0cb;
+    padding: 20px;
+}
+
+h2 {
+    margin: auto;
+    color: #333;
+}
+
+.form-group {
+    align-items: center;
+    justify-content: center;
+    margin-top: 50px;
+    margin-bottom: 20px;
+}
+
+input {
+    padding: 10px;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.module-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.module-card h4 {
+    margin: 0;
+    color: #007bff;
+}
+
+.module-card p {
+    margin: 5px 0;
+    color: #555;
+}
+
+select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background: linear-gradient(45deg, #007bff, #00c6ff);
+    border: none;
+    padding: 12px 25px;
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
