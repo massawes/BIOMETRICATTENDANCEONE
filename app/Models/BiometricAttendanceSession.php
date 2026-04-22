@@ -14,6 +14,7 @@ class BiometricAttendanceSession extends Model
         'class_timing_id',
         'day',
         'subject',
+        'zkbio_start_transaction_id',
         'started_at',
         'ended_at',
         'is_active',
@@ -25,6 +26,7 @@ class BiometricAttendanceSession extends Model
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
             'is_active' => 'boolean',
+            'zkbio_start_transaction_id' => 'integer',
         ];
     }
 }

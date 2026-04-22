@@ -116,7 +116,7 @@
                         <h6 class="fw-bold mb-1 text-dark">Biometric Attendance</h6>
                         @if($activeBiometricSession)
                             <p class="text-success small mb-0">
-                                Running for {{ $selectedSubject }}. {{ $biometricPresentCount }} student(s) marked present.
+                                Running for {{ $selectedSubject }}. <span id="biometricPresentCount">{{ $biometricPresentCount }}</span> student(s) marked present.
                             </p>
                         @else
                             <p class="text-muted small mb-0">
@@ -200,7 +200,7 @@
                             </thead>
                             <tbody>
                                 @forelse($students as $s)
-                                    <tr>
+                                    <tr data-admin-number="{{ $s->admin_number ?? '' }}">
                                         <td class="ps-3 fw-semibold">
                                             {{ $s->student_name }}
                                             <div class="lecturer-muted small">ID {{ $s->student_id }}</div>
@@ -269,26 +269,36 @@
 
         try {
             const audioContext = new AudioContextClass();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            const masterGain = audioContext.createGain();
+            masterGain.gain.value = 1;
+            masterGain.connect(audioContext.destination);
 
-            oscillator.type = 'sine';
-            oscillator.frequency.value = 880;
-            gainNode.gain.value = 0.0001;
+            const playTone = (frequency, startOffset, duration) => {
+                const oscillator = audioContext.createOscillator();
+                const toneGain = audioContext.createGain();
+                const startTime = audioContext.currentTime + startOffset;
+                const endTime = startTime + duration;
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+                oscillator.type = 'square';
+                oscillator.frequency.value = frequency;
+                toneGain.gain.value = 0.0001;
 
-            const startTime = audioContext.currentTime;
-            gainNode.gain.exponentialRampToValueAtTime(0.12, startTime + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.32);
+                oscillator.connect(toneGain);
+                toneGain.connect(masterGain);
 
-            oscillator.start(startTime);
-            oscillator.stop(startTime + 0.34);
+                toneGain.gain.exponentialRampToValueAtTime(0.9, startTime + 0.02);
+                toneGain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
-            oscillator.onended = () => {
-                audioContext.close().catch(() => {});
+                oscillator.start(startTime);
+                oscillator.stop(endTime);
             };
+
+            playTone(880, 0, 0.26);
+            playTone(1320, 0.28, 0.32);
+
+            window.setTimeout(() => {
+                audioContext.close().catch(() => {});
+            }, 800);
         } catch (error) {
             // Ignore audio failures so attendance still works normally.
         }
@@ -322,6 +332,46 @@
             return null;
         };
 
+        const markQuickAttendance = async (message = 'Marking present now...') => {
+            if (!quickForm || !quickInput || submitting) return;
+
+            submitting = true;
+            setFeedback(message, 'success');
+
+            try {
+                const response = await fetch(quickForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: new FormData(quickForm),
+                    cache: 'no-store',
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok || !payload.ok) {
+                    setFeedback(payload.message || 'Student not found for that admin number.', 'warning');
+                    return;
+                }
+
+                playAttendanceSuccessSound();
+                setFeedback(payload.message || 'Student marked present successfully.', 'success');
+
+                if (payload.admin_number) {
+                    const markedRow = document.querySelector(`tr[data-admin-number="${CSS.escape(String(payload.admin_number))}"]`);
+                    markedRow?.remove();
+                }
+
+                quickInput.value = '';
+                quickInput.focus();
+            } catch (error) {
+                setFeedback('Network is busy. Trying again may help.', 'warning');
+            } finally {
+                submitting = false;
+            }
+        };
+
         const tryAutoMark = (forceSubmit = false) => {
             if (!ready || !quickInput || quickInput.disabled || submitting) return;
 
@@ -341,14 +391,13 @@
 
                 submitting = true;
                 setFeedback(`Matched ${match}. Marking present now...`, 'success');
-                quickForm.submit();
+                submitting = false;
+                markQuickAttendance(`Matched ${match}. Marking present now...`);
                 return;
             }
 
             if (forceSubmit) {
-                submitting = true;
-                setFeedback('Searching on the server...', 'info');
-                quickForm.submit();
+                markQuickAttendance('Searching on the server...');
                 return;
             }
 
@@ -357,11 +406,14 @@
 
         if (quickForm) {
             quickForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+
                 if (quickForm.dataset.ready !== '1') {
-                    event.preventDefault();
                     setFeedback('Select week, course, day, and subject first.', 'warning');
                     return;
                 }
+
+                markQuickAttendance('Searching on the server...');
             });
         }
 
@@ -407,8 +459,23 @@
 
         const hasActiveBiometricSession = @json((bool) $activeBiometricSession);
         const zkbioSyncUrl = @json(route('zkbio.realtime-sync'));
+        const activeBiometricSessionId = @json($activeBiometricSession?->id);
+        const biometricPresentCount = @json((int) $biometricPresentCount);
 
         if (hasActiveBiometricSession) {
+            const biometricSoundKey = `attendance:biometric-present-count:${activeBiometricSessionId}`;
+            const zkbioSessionSyncUrl = `${zkbioSyncUrl}?session_id=${encodeURIComponent(activeBiometricSessionId)}`;
+            const previousBiometricCount = Number(window.sessionStorage.getItem(biometricSoundKey));
+            const hasPreviousBiometricCount = window.sessionStorage.getItem(biometricSoundKey) !== null;
+
+            if (!shouldPlayAttendanceSound && hasPreviousBiometricCount && biometricPresentCount > previousBiometricCount) {
+                window.setTimeout(() => {
+                    playAttendanceSuccessSound();
+                }, 180);
+            }
+
+            window.sessionStorage.setItem(biometricSoundKey, String(biometricPresentCount));
+
             let syncingZkbio = false;
 
             const syncCurrentBiometricSession = async () => {
@@ -417,7 +484,7 @@
                 syncingZkbio = true;
 
                 try {
-                    const response = await fetch(zkbioSyncUrl, {
+                    const response = await fetch(zkbioSessionSyncUrl, {
                         headers: {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
@@ -429,9 +496,19 @@
 
                     const payload = await response.json();
 
-                    if (payload.changed) {
-                        location.reload();
+                    const latestPresentCount = Number(payload.present_count ?? window.sessionStorage.getItem(biometricSoundKey) ?? biometricPresentCount);
+                    const storedPresentCount = Number(window.sessionStorage.getItem(biometricSoundKey) ?? biometricPresentCount);
+                    const biometricCountElement = document.getElementById('biometricPresentCount');
+
+                    if (biometricCountElement && Number.isFinite(latestPresentCount)) {
+                        biometricCountElement.textContent = String(latestPresentCount);
                     }
+
+                    if (payload.changed && latestPresentCount > storedPresentCount) {
+                        playAttendanceSuccessSound();
+                    }
+
+                    window.sessionStorage.setItem(biometricSoundKey, String(latestPresentCount));
                 } catch (error) {
                     // Keep manual attendance usable if ZKBio is temporarily busy.
                 } finally {

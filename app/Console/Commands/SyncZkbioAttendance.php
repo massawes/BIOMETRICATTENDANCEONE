@@ -16,7 +16,6 @@ class SyncZkbioAttendance extends Command
     protected $signature = 'zkbio:sync-attendance
         {--limit=100 : Maximum number of ZKBio logs to process}
         {--since= : Only read ZKBio logs from this punch_time onward}
-        {--allow-outside-class : Save attendance even when scan time is outside timetable}
         {--retry-skipped : Retry logs that were previously skipped}
         {--retry-errors : Retry logs that previously failed with errors}
         {--dry-run : Show what would happen without writing anything}';
@@ -49,7 +48,7 @@ class SyncZkbioAttendance extends Command
                 ->timezone(config('app.timezone'))
                 ->toDateTimeString();
 
-            $logs = DB::table('iclock_transaction')
+            $logsQuery = DB::table('iclock_transaction')
                 ->select([
                     'id',
                     'emp_code',
@@ -60,8 +59,15 @@ class SyncZkbioAttendance extends Command
                     'is_attendance',
                     'company_code',
                 ])
-                ->where('is_attendance', 1)
-                ->where('punch_time', '>=', $sessionStartedAt)
+                ->where('is_attendance', 1);
+
+            if (Schema::hasColumn('biometric_attendance_sessions', 'zkbio_start_transaction_id')) {
+                $logsQuery->where('id', '>', (int) ($session->zkbio_start_transaction_id ?? 0));
+            } else {
+                $logsQuery->where('punch_time', '>=', $sessionStartedAt);
+            }
+
+            $logs = $logsQuery
                 ->whereNotExists(function ($query) {
                     $query->selectRaw('1')
                         ->from('zkbio_attendance_syncs')

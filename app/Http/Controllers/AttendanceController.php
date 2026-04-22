@@ -206,7 +206,7 @@ class AttendanceController extends Controller
                 'ended_at' => now(),
             ]);
 
-        BiometricAttendanceSession::create([
+        $sessionData = [
             'lecturer_id' => $lecturerId,
             'week_id' => $validated['week_id'],
             'course_id' => $validated['course_id'],
@@ -216,10 +216,18 @@ class AttendanceController extends Controller
             'subject' => $validated['subject'],
             'started_at' => now(),
             'is_active' => true,
-        ]);
+        ];
+
+        if (Schema::hasColumn('biometric_attendance_sessions', 'zkbio_start_transaction_id')) {
+            $sessionData['zkbio_start_transaction_id'] = Schema::hasTable('iclock_transaction')
+                ? (int) DB::table('iclock_transaction')->max('id')
+                : 0;
+        }
+
+        BiometricAttendanceSession::create($sessionData);
 
         return redirect()->route('attendanceindex', $validated)
-            ->with('success', 'Biometric attendance started. Students can now scan face or fingerprint.');
+            ->with('success', 'Biometric attendance started. Only new scans after this start will be synced.');
     }
 
     public function stopBiometric(Request $request)
@@ -248,6 +256,13 @@ class AttendanceController extends Controller
     public function quickMark(Request $request)
     {
         if (! Schema::hasColumn('students', 'admin_number')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Admin number search is not available yet.',
+                ], 422);
+            }
+
             return back()->with('error', 'Admin number search is not available yet.');
         }
 
@@ -271,6 +286,13 @@ class AttendanceController extends Controller
         );
 
         if (! $classContext) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Class context not found for the selected filters.',
+                ], 422);
+            }
+
             return back()->with('error', 'Class context not found for the selected filters.');
         }
 
@@ -283,6 +305,13 @@ class AttendanceController extends Controller
             ->first();
 
         if (! $student) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Student not found for that admin number.',
+                ], 404);
+            }
+
             return back()->with('error', 'Student not found for that admin number.');
         }
 
@@ -306,6 +335,15 @@ class AttendanceController extends Controller
         ];
 
         DB::table('attendances')->updateOrInsert($attributes, $values);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => $student->student_name . ' marked present successfully.',
+                'student_name' => $student->student_name,
+                'admin_number' => $student->admin_number,
+            ]);
+        }
 
         return redirect()->route('attendanceindex', [
             'week_id' => $validated['week_id'],
@@ -567,6 +605,8 @@ class AttendanceController extends Controller
             ->where('m.module_name', $subject)
             ->select(
                 'ct.id as class_timing_id',
+                'ct.day',
+                'ct.time',
                 'md.id as module_distribution_id',
                 'm.program_id'
             )
