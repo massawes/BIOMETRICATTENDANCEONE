@@ -263,8 +263,291 @@ const cleanupPrintRoot = () => {
     }
 };
 
-const triggerPrint = () => {
-    const printableArea = document.querySelector('.printable-area');
+const normalizePrintText = (value) =>
+    String(value ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+const escapePrintHtml = (value) =>
+    String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+const shouldHideForPrint = (node) => {
+    if (!node) {
+        return true;
+    }
+
+    if (node.closest('.no-print, [data-print-hide]')) {
+        return true;
+    }
+
+    const styles = window.getComputedStyle(node);
+    return styles.display === 'none' || styles.visibility === 'hidden';
+};
+
+const getReportScope = (button) =>
+    button?.closest('.container-fluid, .container, .px-3') || document;
+
+const getReportTitle = (scope) => {
+    const explicitTitle = scope.querySelector('[data-print-title]');
+    if (explicitTitle) {
+        return normalizePrintText(explicitTitle.textContent);
+    }
+
+    const heading = Array.from(scope.querySelectorAll('h1, h2, h3, h4, h5'))
+        .find((node) => !shouldHideForPrint(node) && normalizePrintText(node.textContent));
+
+    return normalizePrintText(heading?.textContent || document.title || 'Report');
+};
+
+const getFilterLabel = (control, scope) => {
+    if (!control) {
+        return '';
+    }
+
+    if (control.id) {
+        const label = scope.querySelector(`label[for="${control.id}"]`);
+        if (label) {
+            return normalizePrintText(label.textContent);
+        }
+    }
+
+    const closestLabel = control.closest('label');
+    if (closestLabel) {
+        return normalizePrintText(closestLabel.textContent);
+    }
+
+    return normalizePrintText(control.getAttribute('aria-label') || control.name || 'Filter');
+};
+
+const getControlDisplayValue = (control) => {
+    if (!control || control.disabled) {
+        return '';
+    }
+
+    if (control.tagName === 'SELECT') {
+        if (!normalizePrintText(control.value)) {
+            return '';
+        }
+
+        return normalizePrintText(control.selectedOptions?.[0]?.textContent || '');
+    }
+
+    if (control.type === 'checkbox' || control.type === 'radio') {
+        return control.checked ? normalizePrintText(control.value || 'Yes') : '';
+    }
+
+    return normalizePrintText(control.value);
+};
+
+const collectActiveFilters = (scope) => {
+    const form = Array.from(scope.querySelectorAll('form'))
+        .find((candidate) => !candidate.closest('.printable-area'));
+
+    if (!form) {
+        return [];
+    }
+
+    const controls = Array.from(form.querySelectorAll('input, select, textarea'))
+        .filter((control) => {
+            if (!control.name || control.type === 'hidden' || control.type === 'submit' || control.type === 'button') {
+                return false;
+            }
+
+            return !shouldHideForPrint(control);
+        });
+
+    return controls
+        .map((control) => ({
+            label: getFilterLabel(control, form),
+            value: getControlDisplayValue(control),
+        }))
+        .filter((item) => item.label && item.value);
+};
+
+const collectSummaryItems = (printableArea) => {
+    const ignoredLabels = new Set(['current page']);
+    const items = new Map();
+
+    Array.from(printableArea.querySelectorAll('.card-body'))
+        .filter((node) => !node.querySelector('table'))
+        .forEach((node) => {
+            const labelNode = Array.from(node.querySelectorAll('.small, .text-uppercase, .text-muted, .fw-semibold'))
+                .find((candidate) => {
+                    const text = normalizePrintText(candidate.textContent);
+                    return text && text.length <= 40;
+                });
+
+            const valueNode = Array.from(node.querySelectorAll('h1, h2, h3, h4, h5, h6, .fs-1, .fs-2, .fs-3, .fs-4, .exec-metric'))
+                .find((candidate) => normalizePrintText(candidate.textContent));
+
+            const label = normalizePrintText(labelNode?.textContent);
+            const value = normalizePrintText(valueNode?.textContent);
+
+            if (!label || !value || label === value || ignoredLabels.has(label.toLowerCase())) {
+                return;
+            }
+
+            if (!items.has(label.toLowerCase())) {
+                items.set(label.toLowerCase(), { label, value });
+            }
+        });
+
+    return Array.from(items.values()).slice(0, 6);
+};
+
+const getCellPrintText = (cell) => {
+    if (!cell) {
+        return '';
+    }
+
+    const clone = cell.cloneNode(true);
+    clone.querySelectorAll('.no-print, [data-print-hide]').forEach((node) => node.remove());
+    return normalizePrintText(clone.textContent);
+};
+
+const buildPrintTableMarkup = (table, index) => {
+    const headerCells = Array.from(table.querySelectorAll('thead tr:last-child th, thead tr:last-child td'));
+    const includedColumnIndexes = headerCells
+        .map((cell, columnIndex) => ({ cell, columnIndex }))
+        .filter(({ cell }) => !shouldHideForPrint(cell) && getCellPrintText(cell))
+        .map(({ columnIndex }) => columnIndex);
+
+    const headers = includedColumnIndexes.map((columnIndex) => getCellPrintText(headerCells[columnIndex]));
+    const bodyRows = Array.from(table.querySelectorAll('tbody tr'));
+
+    const tableTitle = normalizePrintText(
+        table.closest('.card, section, article')?.querySelector('h1, h2, h3, h4, h5, .exec-section-title')?.textContent
+    );
+
+    const rows = bodyRows
+        .map((row) => {
+            const cells = Array.from(row.children);
+
+            if (cells.length === 1 && cells[0].hasAttribute('colspan')) {
+                return null;
+            }
+
+            const values = includedColumnIndexes.map((columnIndex) => getCellPrintText(cells[columnIndex]));
+
+            if (values.every((value) => !value)) {
+                return null;
+            }
+
+            return values;
+        })
+        .filter(Boolean);
+
+    if (!headers.length || !rows.length) {
+        const emptyMessage = normalizePrintText(bodyRows[0]?.textContent || 'No records available.');
+        return `
+            <section class="report-print-section">
+                ${tableTitle ? `<h2 class="report-print-section-title">${escapePrintHtml(tableTitle)}</h2>` : ''}
+                <div class="report-print-empty">${escapePrintHtml(emptyMessage)}</div>
+            </section>
+        `;
+    }
+
+    return `
+        <section class="report-print-section">
+            ${tableTitle ? `<h2 class="report-print-section-title">${escapePrintHtml(tableTitle)}</h2>` : ''}
+            <div class="report-print-table-wrap">
+                <table class="report-print-table" aria-label="Report table ${index + 1}">
+                    <thead>
+                        <tr>${headers.map((header) => `<th>${escapePrintHtml(header)}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${rows
+                            .map(
+                                (row) => `
+                                    <tr>${row.map((value) => `<td>${escapePrintHtml(value || '-')}</td>`).join('')}</tr>
+                                `
+                            )
+                            .join('')}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    `;
+};
+
+const buildPrintMarkup = (scope, printableArea) => {
+    const title = getReportTitle(scope);
+    const filters = collectActiveFilters(scope);
+    const summaryItems = collectSummaryItems(printableArea);
+    const generatedAt = new Date().toLocaleString();
+    const tables = Array.from(printableArea.querySelectorAll('table'));
+
+    const filterMarkup = filters.length
+        ? `
+            <section class="report-print-section">
+                <h2 class="report-print-section-title">Applied Filters</h2>
+                <div class="report-print-grid">
+                    ${filters
+                        .map(
+                            (item) => `
+                                <div class="report-print-card">
+                                    <div class="report-print-label">${escapePrintHtml(item.label)}</div>
+                                    <div class="report-print-value">${escapePrintHtml(item.value)}</div>
+                                </div>
+                            `
+                        )
+                        .join('')}
+                </div>
+            </section>
+        `
+        : '';
+
+    const summaryMarkup = summaryItems.length
+        ? `
+            <section class="report-print-section">
+                <h2 class="report-print-section-title">Summary</h2>
+                <div class="report-print-grid">
+                    ${summaryItems
+                        .map(
+                            (item) => `
+                                <div class="report-print-card">
+                                    <div class="report-print-label">${escapePrintHtml(item.label)}</div>
+                                    <div class="report-print-value">${escapePrintHtml(item.value)}</div>
+                                </div>
+                            `
+                        )
+                        .join('')}
+                </div>
+            </section>
+        `
+        : '';
+
+    const tableMarkup = tables.length
+        ? tables.map((table, index) => buildPrintTableMarkup(table, index)).join('')
+        : `
+            <section class="report-print-section">
+                <div class="report-print-empty">No printable records found.</div>
+            </section>
+        `;
+
+    return `
+        <div class="report-print-layout">
+            <header class="report-print-header">
+                <div>
+                    <h1 class="report-print-title">${escapePrintHtml(title)}</h1>
+                    <div class="report-print-meta">Generated on ${escapePrintHtml(generatedAt)}</div>
+                </div>
+            </header>
+            ${filterMarkup}
+            ${summaryMarkup}
+            ${tableMarkup}
+        </div>
+    `;
+};
+
+const triggerPrint = (button) => {
+    const scope = getReportScope(button);
+    const printableArea = scope.querySelector('.printable-area') || document.querySelector('.printable-area');
 
     if (!printableArea) {
         showFeedback('Hakuna sehemu ya kuchapisha kwenye page hii.', 'warning');
@@ -275,7 +558,7 @@ const triggerPrint = () => {
 
     const printRoot = document.createElement('div');
     printRoot.id = 'print-root';
-    printRoot.appendChild(printableArea.cloneNode(true));
+    printRoot.innerHTML = buildPrintMarkup(scope, printableArea);
     document.body.appendChild(printRoot);
     document.body.classList.add('printing-report');
 
@@ -311,6 +594,6 @@ document.addEventListener('click', (event) => {
     const printButton = event.target.closest('[data-report-print]');
     if (printButton) {
         event.preventDefault();
-        triggerPrint();
+        triggerPrint(printButton);
     }
 });

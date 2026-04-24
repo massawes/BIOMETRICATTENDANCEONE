@@ -40,7 +40,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card exec-stat h-100">
+                <div class="card exec-stat h-100" data-print-hide>
                     <div class="card-body p-3">
                         <div class="small text-muted text-uppercase fw-bold">Current Page</div>
                         <div class="exec-metric text-dark" style="font-size: 1.6rem;">{{ $programStats->currentPage() }}</div>

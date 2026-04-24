@@ -21,7 +21,15 @@ $box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
 @import 'bootstrap/scss/bootstrap';
 
+#print-root {
+    display: none;
+}
+
 @media print {
+    @page {
+        margin: 12mm;
+    }
+
     body {
         background: #fff !important;
     }
@@ -36,12 +44,111 @@ $box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         width: 100%;
     }
 
+    #print-root,
+    #print-root * {
+        color: #111827 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
     .no-print {
         display: none !important;
     }
 
     #print-root .no-print {
         display: none !important;
+    }
+
+    #print-root .report-print-layout {
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    #print-root .report-print-header {
+        border-bottom: 2px solid #d1d5db;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+    }
+
+    #print-root .report-print-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0 0 0.25rem;
+    }
+
+    #print-root .report-print-meta {
+        font-size: 11px;
+        color: #6b7280 !important;
+    }
+
+    #print-root .report-print-section {
+        margin-top: 1rem;
+    }
+
+    #print-root .report-print-section-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+    }
+
+    #print-root .report-print-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    #print-root .report-print-card {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 0.55rem 0.7rem;
+        break-inside: avoid;
+    }
+
+    #print-root .report-print-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.2rem;
+        text-transform: uppercase;
+        color: #6b7280 !important;
+    }
+
+    #print-root .report-print-value {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    #print-root .report-print-empty {
+        border: 1px dashed #d1d5db;
+        border-radius: 6px;
+        padding: 0.8rem;
+    }
+
+    #print-root .report-print-table-wrap {
+        overflow: visible !important;
+    }
+
+    #print-root .report-print-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    #print-root .report-print-table th,
+    #print-root .report-print-table td {
+        border: 1px solid #d1d5db;
+        padding: 0.45rem 0.55rem;
+        vertical-align: top;
+        text-align: left;
+        word-break: break-word;
+    }
+
+    #print-root .report-print-table th {
+        font-size: 11px;
+        font-weight: 700;
+        background: #f3f4f6 !important;
     }
 }
 

@@ -341,6 +341,7 @@ class AttendanceController extends Controller
                 'ok' => true,
                 'message' => $student->student_name . ' marked present successfully.',
                 'student_name' => $student->student_name,
+                'student_id' => $student->id,
                 'admin_number' => $student->admin_number,
             ]);
         }

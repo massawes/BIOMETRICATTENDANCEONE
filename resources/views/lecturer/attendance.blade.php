@@ -174,7 +174,9 @@
 
                     <div class="attendance-toolbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                         <div class="text-muted small">
-                            {{ method_exists($students, 'total') ? $students->total() : count($students) }} student(s) found
+                            <span id="attendanceStudentCount" data-count="{{ method_exists($students, 'total') ? $students->total() : count($students) }}">
+                                {{ method_exists($students, 'total') ? $students->total() : count($students) }}
+                            </span> student(s) found
                         </div>
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-success btn-sm rounded-pill px-4" onclick="setAllAttendance('present')">
@@ -200,7 +202,7 @@
                             </thead>
                             <tbody>
                                 @forelse($students as $s)
-                                    <tr data-admin-number="{{ $s->admin_number ?? '' }}">
+                                    <tr data-student-id="{{ $s->student_id }}" data-admin-number="{{ $s->admin_number ?? '' }}">
                                         <td class="ps-3 fw-semibold">
                                             {{ $s->student_name }}
                                             <div class="lecturer-muted small">ID {{ $s->student_id }}</div>
@@ -224,7 +226,7 @@
                                     <tr>
                                         <td colspan="6" class="text-center py-4">
                                             <div class="lecturer-empty py-4 mx-3">
-                                                <h6 class="fw-bold mb-1">All students already have attendance</h6>
+                                                <h6 class="fw-bold mb-1">All visible students already have attendance</h6>
                                                 <p class="lecturer-muted mb-0">Anyone marked present or absent is hidden automatically from this list.</p>
                                             </div>
                                         </td>
@@ -269,9 +271,16 @@
 
         try {
             const audioContext = new AudioContextClass();
+            const compressor = audioContext.createDynamicsCompressor();
             const masterGain = audioContext.createGain();
-            masterGain.gain.value = 1;
-            masterGain.connect(audioContext.destination);
+            compressor.threshold.value = -24;
+            compressor.knee.value = 30;
+            compressor.ratio.value = 8;
+            compressor.attack.value = 0.003;
+            compressor.release.value = 0.18;
+            masterGain.gain.value = 1.8;
+            masterGain.connect(compressor);
+            compressor.connect(audioContext.destination);
 
             const playTone = (frequency, startOffset, duration) => {
                 const oscillator = audioContext.createOscillator();
@@ -286,19 +295,21 @@
                 oscillator.connect(toneGain);
                 toneGain.connect(masterGain);
 
-                toneGain.gain.exponentialRampToValueAtTime(0.9, startTime + 0.02);
+                toneGain.gain.exponentialRampToValueAtTime(1.2, startTime + 0.02);
                 toneGain.gain.exponentialRampToValueAtTime(0.0001, endTime);
 
                 oscillator.start(startTime);
                 oscillator.stop(endTime);
             };
 
-            playTone(880, 0, 0.26);
-            playTone(1320, 0.28, 0.32);
+            playTone(880, 0, 0.22);
+            playTone(1320, 0.23, 0.24);
+            playTone(1760, 0.48, 0.34);
+            playTone(1760, 0.9, 0.18);
 
             window.setTimeout(() => {
                 audioContext.close().catch(() => {});
-            }, 800);
+            }, 1300);
         } catch (error) {
             // Ignore audio failures so attendance still works normally.
         }
@@ -319,6 +330,64 @@
             if (!feedback) return;
             feedback.className = `lecturer-muted small mt-2 text-${tone === 'warning' ? 'warning' : tone === 'success' ? 'success' : tone === 'info' ? 'primary' : 'muted'}`;
             feedback.textContent = message;
+        };
+
+        const decrementAttendanceCount = (removedCount) => {
+            const countElement = document.getElementById('attendanceStudentCount');
+            if (!countElement || removedCount < 1) return;
+
+            const currentCount = Number(countElement.dataset.count || countElement.textContent || 0);
+            const nextCount = Math.max(0, currentCount - removedCount);
+            countElement.dataset.count = String(nextCount);
+            countElement.textContent = String(nextCount);
+        };
+
+        const showEmptyAttendanceRowIfNeeded = () => {
+            const tbody = document.querySelector('#manualAttendanceForm tbody');
+            if (!tbody || tbody.querySelector('tr[data-student-id]')) return;
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <div class="lecturer-empty py-4 mx-3">
+                            <h6 class="fw-bold mb-1">All visible students already have attendance</h6>
+                            <p class="lecturer-muted mb-0">Anyone marked present or absent is hidden automatically from this list.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        };
+
+        const removeMarkedAttendanceRows = (markedStudents) => {
+            if (!Array.isArray(markedStudents) || markedStudents.length === 0) return 0;
+
+            let removedCount = 0;
+
+            markedStudents.forEach((student) => {
+                const selectors = [];
+
+                if (student.student_id) {
+                    selectors.push(`tr[data-student-id="${CSS.escape(String(student.student_id))}"]`);
+                }
+
+                if (student.admin_number) {
+                    selectors.push(`tr[data-admin-number="${CSS.escape(String(student.admin_number))}"]`);
+                }
+
+                selectors.forEach((selector) => {
+                    const markedRow = document.querySelector(selector);
+
+                    if (markedRow) {
+                        markedRow.remove();
+                        removedCount++;
+                    }
+                });
+            });
+
+            decrementAttendanceCount(removedCount);
+            showEmptyAttendanceRowIfNeeded();
+
+            return removedCount;
         };
 
         const findExactMatch = (rawValue) => {
@@ -358,10 +427,7 @@
                 playAttendanceSuccessSound();
                 setFeedback(payload.message || 'Student marked present successfully.', 'success');
 
-                if (payload.admin_number) {
-                    const markedRow = document.querySelector(`tr[data-admin-number="${CSS.escape(String(payload.admin_number))}"]`);
-                    markedRow?.remove();
-                }
+                removeMarkedAttendanceRows([payload]);
 
                 quickInput.value = '';
                 quickInput.focus();
@@ -507,6 +573,8 @@
                     if (payload.changed && latestPresentCount > storedPresentCount) {
                         playAttendanceSuccessSound();
                     }
+
+                    removeMarkedAttendanceRows(payload.marked_students || []);
 
                     window.sessionStorage.setItem(biometricSoundKey, String(latestPresentCount));
                 } catch (error) {
