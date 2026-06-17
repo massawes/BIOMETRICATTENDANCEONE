@@ -1,69 +1,91 @@
 @extends('layouts.app')
+@section('page-title', 'Dashboard — Ubora (QA)')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
-        <div>
-            <div class="text-uppercase text-muted small fw-semibold mb-1">Quality Control</div>
-            <h4 class="fw-bold mb-1 text-dark">Quality Assurance</h4>
-            <p class="text-muted mb-0">Short view of module coverage and flagged issues.</p>
-        </div>
-        <span class="badge rounded-pill text-bg-primary px-3 py-2">
-            {{ $pendingReviews }} pending
-        </span>
-    </div>
 
-    <div class="row g-2 mb-3">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-2">Modules</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $totalModules }}</div>
-                </div>
-            </div>
+<div class="ent-page-header">
+    <div>
+        <h1 class="ent-page-title">Quality Assurance Dashboard</h1>
+        <p class="ent-page-sub">Fuatilia ubora wa ufundishaji, mahudhurio na masuala yanayohitaji umakini</p>
+    </div>
+    <div class="ent-page-actions">
+        <a href="{{ route('analytics.dashboard') }}" class="ent-btn ent-btn-outline ent-btn-sm">
+            <i class='bx bx-bar-chart-alt-2'></i> Takwimu Zaidi
+        </a>
+        <a href="{{ route('management.attendance-report') }}" class="ent-btn ent-btn-primary ent-btn-sm">
+            <i class='bx bx-file-blank'></i> Ripoti
+        </a>
+    </div>
+</div>
+
+{{-- Stat cards --}}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat">
+            <div class="ent-stat-icon"><i class='bx bx-book-content'></i></div>
+            <div class="ent-stat-value">{{ $totalModules }}</div>
+            <div class="ent-stat-label">Jumla ya Moduli</div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-2">Coverage</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $coverageRate }}%</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-2">Pending</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $pendingReviews }}</div>
-                </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat {{ $coverageRate >= 80 ? 'ent-stat-success' : 'ent-stat-warning' }}">
+            <div class="ent-stat-icon"><i class='bx bx-badge-check'></i></div>
+            <div class="ent-stat-value">{{ $coverageRate }}%</div>
+            <div class="ent-stat-label">Kiwango cha Ufunikaji</div>
+            <div class="ent-stat-trend {{ $coverageRate >= 80 ? 'up' : 'down' }}">
+                <i class='bx {{ $coverageRate >= 80 ? "bx-trending-up" : "bx-trending-down" }}'></i>
+                {{ $coverageRate >= 80 ? 'Kiwango kizuri' : 'Inahitaji maboresho' }}
             </div>
         </div>
     </div>
-
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-3">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                <div>
-                    <h6 class="fw-bold mb-1 text-dark">Modules Needing Attention</h6>
-                    <p class="text-muted mb-0">Low attendance modules and timetable gaps.</p>
-                </div>
-                <span class="badge text-bg-dark rounded-pill px-3 py-2">{{ $modulesWithoutTimetables }} gaps</span>
-            </div>
-
-            <div class="d-grid gap-2">
-                @forelse($lowAttendanceModules as $module)
-                    <div class="d-flex justify-content-between align-items-center border rounded-3 px-3 py-2">
-                        <div>
-                            <div class="fw-semibold text-dark">{{ $module->module_name }}</div>
-                            <div class="text-muted small">{{ $module->program_name ?? 'General' }} • {{ $module->total_records }} records</div>
-                        </div>
-                        <span class="badge rounded-pill text-bg-danger px-3 py-2">{{ $module->attendance_rate }}%</span>
-                    </div>
-                @empty
-                    <div class="text-center py-3 text-muted">No modules currently flagged.</div>
-                @endforelse
-            </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat {{ $pendingReviews > 0 ? 'ent-stat-danger' : 'ent-stat-success' }}">
+            <div class="ent-stat-icon"><i class='bx bx-time-five'></i></div>
+            <div class="ent-stat-value">{{ $pendingReviews }}</div>
+            <div class="ent-stat-label">Masuala Yanayosubiri</div>
         </div>
     </div>
 </div>
+
+{{-- Modules needing attention --}}
+<div class="ent-card">
+    <div class="ent-card-header">
+        <h2 class="ent-card-title"><i class='bx bx-search-alt'></i> Moduli Zinazohitaji Umakini</h2>
+        <span class="ent-badge ent-badge-warning">{{ $modulesWithoutTimetables }} pengo</span>
+    </div>
+    <div class="ent-card-body" style="padding:0">
+        @if($lowAttendanceModules->isEmpty())
+            <div class="ent-empty">
+                <i class='bx bx-check-double'></i>
+                <p>Hakuna moduli zenye tatizo kwa sasa.</p>
+            </div>
+        @else
+            <table class="ent-table">
+                <thead>
+                    <tr>
+                        <th>Moduli</th>
+                        <th>Programu</th>
+                        <th>Rekodi</th>
+                        <th>Mahudhurio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($lowAttendanceModules as $module)
+                        <tr>
+                            <td style="font-weight:600">{{ $module->module_name }}</td>
+                            <td style="color:var(--ent-text-muted)">{{ $module->program_name ?? 'Jumla' }}</td>
+                            <td style="color:var(--ent-text-muted)">{{ $module->total_records }}</td>
+                            <td>
+                                <span class="ent-badge ent-badge-danger">
+                                    <i class='bx bx-trending-down'></i> {{ $module->attendance_rate }}%
+                                </span>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    </div>
+</div>
+
 @endsection

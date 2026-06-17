@@ -397,6 +397,10 @@ class AttendanceController extends Controller
 
     public function recordsIndex(Request $request)
     {
+        if (! auth()->user()->hasPermission('view_attendance')) {
+            abort(403, 'You are not authorized to view attendance records.');
+        }
+
         $hasAttendanceSource = Schema::hasColumn('attendances', 'attendance_source');
         $sourceFilter = $hasAttendanceSource ? $request->input('source', 'all') : 'all';
         $showRawZkbioLogs = $request->boolean('show_raw_logs');
@@ -514,11 +518,19 @@ class AttendanceController extends Controller
 
     public function recordsCreate()
     {
+        if (! auth()->user()->hasPermission('create_attendance')) {
+            abort(403, 'You are not authorized to create attendance records.');
+        }
+
         return view('management.attendance.create', $this->attendanceFormData());
     }
 
     public function recordsStore(Request $request)
     {
+        if (! auth()->user()->hasPermission('create_attendance')) {
+            abort(403, 'You are not authorized to create attendance records.');
+        }
+
         $validated = $this->validateAttendanceRecord($request);
         if (Schema::hasColumn('attendances', 'attendance_source')) {
             $validated['attendance_source'] = 'manual';
@@ -531,6 +543,10 @@ class AttendanceController extends Controller
 
     public function recordsEdit(Attendance $attendance)
     {
+        if (! auth()->user()->hasPermission('edit_attendance')) {
+            abort(403, 'You are not authorized to edit attendance records.');
+        }
+
         return view('management.attendance.edit', array_merge(
             $this->attendanceFormData(),
             compact('attendance')
@@ -539,6 +555,10 @@ class AttendanceController extends Controller
 
     public function recordsUpdate(Request $request, Attendance $attendance)
     {
+        if (! auth()->user()->hasPermission('edit_attendance')) {
+            abort(403, 'You are not authorized to edit attendance records.');
+        }
+
         $validated = $this->validateAttendanceRecord($request);
 
         $attendance->update($validated);
@@ -548,6 +568,10 @@ class AttendanceController extends Controller
 
     public function recordsDestroy(Attendance $attendance)
     {
+        if (! auth()->user()->hasPermission('delete_attendance')) {
+            abort(403, 'You are not authorized to delete attendance records.');
+        }
+
         $attendance->delete();
 
         return redirect()->route('attendance.records.index')->with('success', 'Attendance record deleted successfully.');

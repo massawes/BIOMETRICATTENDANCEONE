@@ -1,81 +1,95 @@
 @extends('layouts.app')
+@section('page-title', 'Dashboard — Mwanafunzi')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div>
-            <div class="text-uppercase text-muted small fw-semibold mb-1">Student Workspace</div>
-            <h4 class="fw-bold mb-0 text-dark">Welcome back, {{ $student->student_name ?? 'Student' }}</h4>
-            <p class="text-muted mb-0">{{ $programName ?? 'Your program' }} @if($departmentName) | {{ $departmentName }} @endif</p>
-        </div>
-        <span class="badge rounded-pill {{ $attendanceRate >= 75 ? 'text-bg-success' : 'text-bg-warning' }} px-3 py-2">
-            {{ $attendanceStatus }}
-        </span>
-    </div>
 
-    <div class="row g-2 mb-3">
-        <div class="col-6 col-md-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-1">Attendance</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $attendanceRate }}%</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-1">Modules</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $totalModules }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-1">Sessions</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $totalRecords }}</div>
-                </div>
+{{-- Page header --}}
+<div class="ent-page-header">
+    <div>
+        <h1 class="ent-page-title">Habari, {{ $student->student_name ?? auth()->user()->name }}</h1>
+        <p class="ent-page-sub">
+            {{ $programName ?? 'Programu yako' }}
+            @if($departmentName) &nbsp;·&nbsp; {{ $departmentName }} @endif
+        </p>
+    </div>
+    <div class="ent-page-actions">
+        <a href="{{ route('studentmodules') }}" class="ent-btn ent-btn-outline ent-btn-sm">
+            <i class='bx bx-book'></i> Moduli Zangu
+        </a>
+        <a href="{{ route('studenttimetable') }}" class="ent-btn ent-btn-primary ent-btn-sm">
+            <i class='bx bx-calendar'></i> Ratiba
+        </a>
+    </div>
+</div>
+
+{{-- Stat cards --}}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat {{ $attendanceRate >= 75 ? 'ent-stat-success' : 'ent-stat-danger' }}">
+            <div class="ent-stat-icon"><i class='bx bx-user-check'></i></div>
+            <div class="ent-stat-value">{{ $attendanceRate }}%</div>
+            <div class="ent-stat-label">Wastani wa Mahudhurio</div>
+            <div class="ent-stat-trend {{ $attendanceRate >= 75 ? 'up' : 'down' }}">
+                <i class='bx {{ $attendanceRate >= 75 ? "bx-trending-up" : "bx-trending-down" }}'></i>
+                {{ $attendanceStatus }}
             </div>
         </div>
     </div>
-
-    <div class="card border-0 shadow-sm rounded-4 mb-3">
-        <div class="card-body p-3">
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{{ route('studentmodules') }}" class="btn btn-dark btn-sm rounded-pill px-3">My Modules</a>
-                <a href="{{ route('studenttimetable') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">Timetable</a>
-                <a href="{{ route('profile.edit') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">Profile</a>
-            </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat ent-stat-info">
+            <div class="ent-stat-icon"><i class='bx bx-book-open'></i></div>
+            <div class="ent-stat-value">{{ $totalModules }}</div>
+            <div class="ent-stat-label">Moduli Zilizosajiliwa</div>
         </div>
     </div>
-
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-3">
-            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                <div>
-                    <h6 class="fw-bold mb-1 text-dark">Recent Attendance</h6>
-                    <p class="text-muted mb-0">Latest records from your sessions.</p>
-                </div>
-                <span class="badge text-bg-primary rounded-pill px-3 py-2">{{ $recentAttendance->count() }} shown</span>
-            </div>
-
-            <div class="d-grid gap-2">
-                @forelse($recentAttendance as $attendance)
-                    <div class="d-flex justify-content-between align-items-center border rounded-3 px-3 py-2">
-                        <div>
-                            <div class="fw-semibold text-dark">{{ $attendance->module_name }}</div>
-                            <div class="text-muted small">{{ $attendance->date }}</div>
-                        </div>
-                        <span class="badge rounded-pill {{ $attendance->is_present ? 'text-bg-success' : 'text-bg-danger' }} px-3 py-2">
-                            {{ $attendance->is_present ? 'Present' : 'Absent' }}
-                        </span>
-                    </div>
-                @empty
-                    <div class="text-center py-3 text-muted">No attendance records found.</div>
-                @endforelse
-            </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat ent-stat-warning">
+            <div class="ent-stat-icon"><i class='bx bx-calendar-check'></i></div>
+            <div class="ent-stat-value">{{ $totalRecords }}</div>
+            <div class="ent-stat-label">Jumla ya Vikao</div>
         </div>
     </div>
 </div>
+
+{{-- Recent attendance --}}
+<div class="ent-card">
+    <div class="ent-card-header">
+        <h2 class="ent-card-title"><i class='bx bx-history'></i> Mahudhurio ya Hivi Karibuni</h2>
+        <span class="ent-badge ent-badge-primary">{{ $recentAttendance->count() }} rekodi</span>
+    </div>
+    <div class="ent-card-body" style="padding:0">
+        @if($recentAttendance->isEmpty())
+            <div class="ent-empty">
+                <i class='bx bx-calendar-x'></i>
+                <p>Hakuna rekodi za mahudhurio bado.</p>
+            </div>
+        @else
+            <table class="ent-table">
+                <thead>
+                    <tr>
+                        <th>Moduli</th>
+                        <th>Tarehe</th>
+                        <th>Hali</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($recentAttendance as $rec)
+                        <tr>
+                            <td style="font-weight:600">{{ $rec->module_name }}</td>
+                            <td style="color:var(--ent-text-muted)">{{ $rec->date }}</td>
+                            <td>
+                                @if($rec->is_present)
+                                    <span class="ent-badge ent-badge-success"><i class='bx bx-check'></i> Alikuwepo</span>
+                                @else
+                                    <span class="ent-badge ent-badge-danger"><i class='bx bx-x'></i> Hakuwepo</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    </div>
+</div>
+
 @endsection

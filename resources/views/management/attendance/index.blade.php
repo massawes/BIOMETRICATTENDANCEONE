@@ -24,7 +24,9 @@
             </div>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-outline-primary" id="syncZkbioNow" data-sync-url="{{ route('zkbio.realtime-sync') }}">Sync ZKBio Now</button>
-                <a href="{{ route('attendance.records.create') }}" class="btn btn-primary">Add Attendance</a>
+                @if (auth()->user()->hasPermission('create_attendance'))
+                    <a href="{{ route('attendance.records.create') }}" class="btn btn-primary">Add Attendance</a>
+                @endif
             </div>
         </div>
         <form method="GET" action="{{ route('attendance.records.index') }}" class="row g-2 mb-3">
@@ -84,12 +86,24 @@
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('attendance.records.edit', $attendance->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                    <form action="{{ route('attendance.records.destroy', $attendance->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this attendance record?')">Delete</button>
-                                    </form>
+                                    @if (auth()->user()->hasPermission('edit_attendance'))
+                                        <a href="{{ route('attendance.records.edit', $attendance->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                    @else
+                                        <button type="button" class="btn btn-sm btn-warning"
+                                            onclick="alert('You are not authorized to edit attendance records.')">Edit</button>
+                                    @endif
+
+                                    @if (auth()->user()->hasPermission('delete_attendance'))
+                                        <form action="{{ route('attendance.records.destroy', $attendance->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Delete this attendance record?')">Delete</button>
+                                        </form>
+                                    @else
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="alert('You are not authorized to delete attendance records.')">Delete</button>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

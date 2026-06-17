@@ -46,9 +46,9 @@ class User extends Authenticatable
 
     public function role()
     {
-        
+
         return $this->belongsTo(Role::class);
-    
+
     }
 
     public function program()
@@ -76,6 +76,10 @@ class User extends Authenticatable
     {
         return $this->hasOne(Hod::class);
     }
-   
+
+    public function hasPermission(string $key): bool
+    {
+        return $this->role?->hasPermission($key) ?? false;
+    }
 
 }

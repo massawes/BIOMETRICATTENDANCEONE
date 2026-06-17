@@ -23,6 +23,7 @@ use App\Http\Controllers\RegistrarController;
 use App\Http\Controllers\RectorController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleManagementController;
+use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Student\ModuleController as StudentModuleController;
 use App\Http\Controllers\Student\TimetableController;
 use App\Http\Controllers\StudentController;
@@ -116,6 +117,8 @@ Route::middleware(['auth', 'hod'])->group(function () {
         Route::resource('roles', RoleManagementController::class)->except(['show']);
         Route::resource('weeks', WeekManagementController::class)->except(['show']);
         Route::resource('class-timings', ClassTimingManagementController::class)->except(['show']);
+        Route::get('role-permissions', [RolePermissionController::class, 'index'])->name('role-permissions.index');
+        Route::put('role-permissions/{role}', [RolePermissionController::class, 'update'])->name('role-permissions.update');
     });
 });
 

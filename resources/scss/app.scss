@@ -152,91 +152,1125 @@ $box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
 }
 
-// Custom utilities
-.bg-slate {
-    background-color: #0f172a !important; // Tailwind slate-900
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENTERPRISE DESIGN SYSTEM — ATC Student Biometric Attendance
+// Inspired by: Microsoft 365, Google Admin, Azure Portal, Tabler, Filament
+// Colours: Primary #0F4C81 · Secondary #00695C · Sidebar #1E293B
+// Font: Inter → Segoe UI → system-ui
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Design Tokens ─────────────────────────────────────────────────────────────
+:root {
+    --ent-primary:       #0F4C81;
+    --ent-primary-light: #1565C0;
+    --ent-primary-dark:  #0a3560;
+    --ent-secondary:     #00695C;
+    --ent-accent:        #1976D2;
+    --ent-success:       #2E7D32;
+    --ent-warning:       #F9A825;
+    --ent-danger:        #D32F2F;
+    --ent-info:          #0288D1;
+    --ent-bg:            #F4F6F8;
+    --ent-sidebar:       #1E293B;
+    --ent-sidebar-hover: #263446;
+    --ent-sidebar-active:#2D3F55;
+    --ent-card:          #FFFFFF;
+    --ent-text:          #1F2937;
+    --ent-text-muted:    #6B7280;
+    --ent-text-light:    #9CA3AF;
+    --ent-border:        #E5E7EB;
+    --ent-border-light:  #F3F4F6;
+    --ent-radius-sm:     6px;
+    --ent-radius:        10px;
+    --ent-radius-lg:     14px;
+    --ent-shadow-xs:     0 1px 2px rgba(0,0,0,.05);
+    --ent-shadow-sm:     0 1px 4px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+    --ent-shadow:        0 2px 8px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05);
+    --ent-shadow-md:     0 4px 16px rgba(0,0,0,.09), 0 2px 6px rgba(0,0,0,.06);
+    --ent-shadow-lg:     0 8px 28px rgba(0,0,0,.1),  0 4px 10px rgba(0,0,0,.06);
+    --ent-sidebar-w:     260px;
+    --ent-topbar-h:      58px;
+    --ent-transition:    all .18s ease;
 }
-.sidebar-link {
-    transition: all 0.2s ease;
-    border-radius: 0.5rem;
-    padding: 0.75rem 1rem;
+
+// ── Typography — Inter ─────────────────────────────────────────────────────────
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+body, .ent-body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ent-text);
+    background: var(--ent-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+$sidebar-bg: var(--ent-sidebar);
+$sidebar-w: 260px;
+
+// ── App Shell ─────────────────────────────────────────────────────────────────
+.ega-app-body { background: var(--ent-bg); min-height: 100vh; }
+
+.ega-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+// ROOT CAUSE FIX: overflow-y must be on .ega-sidebar-nav only, NOT here.
+// If overflow-y: auto is on the whole sidebar, brand + footer scroll off-screen
+// on short viewports — the footer overlaps or disappears entirely.
+.ega-sidebar {
+    width: var(--ent-sidebar-w);
+    background: var(--ent-sidebar);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;           // ← was overflow-y: auto (caused overlap)
+    transition: transform .28s ease;
+    border-right: 1px solid rgba(0,0,0,.12);
+}
+
+// ── Sidebar Brand ─────────────────────────────────────────────────────────────
+.ega-sidebar-brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    height: var(--ent-topbar-h);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    flex-shrink: 0;
+}
+
+.ega-sidebar-brand-inner {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    min-width: 0;
+    text-decoration: none;
+}
+
+.ega-sidebar-logo {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: var(--ent-radius-sm);
+    background: rgba(255,255,255,.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    img { width: 100%; height: 100%; object-fit: contain; padding: 2px; filter: brightness(0) invert(1); }
+}
+
+.ega-sidebar-brand-name {
+    font-size: .92rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    letter-spacing: -.01em;
+}
+
+.ega-sidebar-brand-sub {
+    font-size: .65rem;
+    color: rgba(255,255,255,.4);
+    white-space: nowrap;
+    letter-spacing: .02em;
+}
+
+.ega-sidebar-close {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,.5);
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color .15s;
+    &:hover { color: #fff; }
+}
+
+// Sidebar — role pill
+.ega-sidebar-strip { display: none; } // hidden — stripe is on topbar
+
+.ega-sidebar-role {
+    margin: .75rem .85rem .35rem;
+    padding: .38rem .7rem;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: var(--ent-radius-sm);
+    font-size: .7rem;
+    font-weight: 700;
+    color: rgba(255,255,255,.55);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    flex-shrink: 0;
+
+    i { font-size: .8rem; }
+}
+
+// Sidebar — navigation (THIS is the only element that scrolls)
+// flex: 1 + min-height: 0 + overflow-y: auto = scrollable middle region
+// Brand (top) and Footer (bottom) are flex-shrink: 0 → always visible
+.ega-sidebar-nav {
+    flex: 1;
+    min-height: 0;                  // required for flex child scroll
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: .4rem .75rem 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.08) transparent;
+
+    &::-webkit-scrollbar       { width: 3px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
+}
+
+.ega-nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+// Section label
+.ega-nav-section {
+    padding: .85rem .6rem .3rem;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.28);
+    user-select: none;
+}
+
+// Main nav link
+.ega-nav-link {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .6rem .75rem;
+    border-radius: var(--ent-radius-sm);
+    color: rgba(255,255,255,.65);
+    text-decoration: none;
+    font-size: .84rem;
+    font-weight: 500;
+    transition: var(--ent-transition);
+    position: relative;
+
+    i {
+        font-size: 1.05rem;
+        flex-shrink: 0;
+        width: 1.15rem;
+        text-align: center;
+    }
+
     &:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        transform: translateX(3px);
+        background: var(--ent-sidebar-hover);
+        color: rgba(255,255,255,.9);
+    }
+
+    &.active {
+        background: var(--ent-sidebar-active);
+        color: #fff;
+        font-weight: 600;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 20%;
+            bottom: 20%;
+            width: 3px;
+            background: var(--ent-accent);
+            border-radius: 0 3px 3px 0;
+        }
+
+        i { color: #93c5fd; }
     }
 }
-.sidebar-icon {
+
+// Collapsible groups
+.ega-nav-group {
+    summary { list-style: none; cursor: pointer; outline: none; }
+    summary::-webkit-details-marker { display: none; }
+}
+
+.ega-nav-group-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .6rem .75rem;
+    border-radius: var(--ent-radius-sm);
+    color: rgba(255,255,255,.65);
+    font-size: .84rem;
+    font-weight: 500;
+    transition: var(--ent-transition);
+    user-select: none;
+
+    i:first-child { font-size: 1.05rem; width: 1.15rem; text-align: center; }
+
+    &:hover {
+        background: var(--ent-sidebar-hover);
+        color: rgba(255,255,255,.9);
+    }
+}
+
+.ega-nav-group[open] > summary .ega-nav-group-toggle,
+.ega-nav-group.is-open .ega-nav-group-toggle {
+    color: rgba(255,255,255,.9);
+}
+
+.ega-caret {
+    font-size: .85rem;
+    transition: transform .2s ease;
+    flex-shrink: 0;
+    color: rgba(255,255,255,.3);
+}
+
+.ega-nav-group[open] .ega-caret,
+.ega-nav-group.is-open .ega-caret { transform: rotate(180deg); }
+
+.ega-nav-sub {
+    margin: 2px 0 4px 1.9rem;
+    padding-left: .7rem;
+    border-left: 1px solid rgba(255,255,255,.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.ega-nav-sub-link {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .5rem .65rem;
+    border-radius: var(--ent-radius-sm);
+    color: rgba(255,255,255,.55);
+    text-decoration: none;
+    font-size: .82rem;
+    font-weight: 400;
+    transition: var(--ent-transition);
+    position: relative;
+
+    i { font-size: .9rem; flex-shrink: 0; width: 1rem; text-align: center; }
+
+    &:hover {
+        background: var(--ent-sidebar-hover);
+        color: rgba(255,255,255,.88);
+    }
+
+    &.active {
+        background: var(--ent-sidebar-active);
+        color: #fff;
+        font-weight: 600;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 25%;
+            bottom: 25%;
+            width: 2px;
+            background: var(--ent-accent);
+            border-radius: 0 2px 2px 0;
+        }
+
+        i { color: #93c5fd; }
+    }
+}
+
+// Sidebar footer
+.ega-sidebar-footer {
+    border-top: 1px solid rgba(255,255,255,.06);
+    padding: .75rem .85rem;
+    flex-shrink: 0;
+}
+
+.ega-sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.ega-sidebar-user-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--ent-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ega-sidebar-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ega-sidebar-user-name {
+    font-size: .8rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.85);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ega-sidebar-user-role {
+    font-size: .67rem;
+    color: rgba(255,255,255,.38);
+    margin-top: 1px;
+}
+
+.ega-sidebar-logout {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.4);
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: var(--ent-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    cursor: pointer;
+    transition: var(--ent-transition);
+    flex-shrink: 0;
+
+    &:hover {
+        background: rgba(211,47,47,.15);
+        border-color: rgba(211,47,47,.3);
+        color: #fca5a5;
+    }
+}
+
+.ega-sidebar-footer-note {
+    margin-top: .55rem;
+    font-size: .63rem;
+    color: rgba(255,255,255,.2);
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    i { font-size: .72rem; color: #2E7D32; }
+}
+
+// Mobile sidebar
+@media (max-width: 767.98px) {
+    .ega-sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        height: 100%;
+        z-index: 1050;
+        transform: translateX(-100%);
+    }
+    .ega-sidebar.open { transform: translateX(0); box-shadow: var(--ent-shadow-lg); }
+}
+
+@media (min-width: 768px) {
+    .ega-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        transform: none !important;
+    }
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1049;
+    background: rgba(0,0,0,.45);
+    &.show { display: block; }
+}
+
+// ── Main area ─────────────────────────────────────────────────────────────────
+.ega-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 100vh;
+}
+
+.ega-content {
+    flex: 1;
+    padding: 1.5rem 1.75rem;
+}
+
+@media (max-width: 767.98px) { .ega-content { padding: 1rem; } }
+
+// ── Topbar ────────────────────────────────────────────────────────────────────
+.ega-topnav {
+    background: #fff;
+    border-bottom: 1px solid var(--ent-border);
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: var(--ent-shadow-xs);
+}
+
+.ega-topnav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 1.5rem;
+    height: var(--ent-topbar-h);
+}
+
+.ega-topnav-left {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.ega-hamburger {
+    background: transparent;
+    border: 1px solid var(--ent-border);
+    color: var(--ent-text-muted);
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--ent-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--ent-transition);
+
+    &:hover {
+        border-color: var(--ent-primary);
+        color: var(--ent-primary);
+        background: rgba(15,76,129,.05);
+    }
+}
+
+.ega-topnav-title {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ega-topnav-page {
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--ent-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -.01em;
+}
+
+.ega-topnav-sub {
+    font-size: .68rem;
+    color: var(--ent-text-light);
+    font-weight: 400;
+}
+
+// Search bar
+.ega-search {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    background: var(--ent-bg);
+    border: 1px solid var(--ent-border);
+    border-radius: var(--ent-radius-sm);
+    padding: 0 .75rem;
+    height: 2.1rem;
+    flex: 1;
+    max-width: 22rem;
+    transition: var(--ent-transition);
+
+    i { font-size: 1rem; color: var(--ent-text-light); flex-shrink: 0; }
+
+    input {
+        border: none;
+        background: transparent;
+        font-size: .82rem;
+        color: var(--ent-text);
+        width: 100%;
+        outline: none;
+        font-family: inherit;
+
+        &::placeholder { color: var(--ent-text-light); }
+    }
+
+    &:focus-within {
+        border-color: var(--ent-accent);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(25,118,210,.08);
+    }
+}
+
+.ega-topnav-centre {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 .75rem;
+    max-width: 28rem;
+    margin: 0 auto;
+}
+
+.ega-topnav-right {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-shrink: 0;
+}
+
+.ega-topnav-date {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .76rem;
+    color: var(--ent-text-muted);
+    font-weight: 500;
+    padding: .32rem .65rem;
+    background: var(--ent-bg);
+    border: 1px solid var(--ent-border);
+    border-radius: var(--ent-radius-sm);
+
+    i { color: var(--ent-primary); font-size: .85rem; }
+}
+
+// Topbar icon button (notifications etc)
+.ega-topnav-icon-btn {
+    position: relative;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--ent-border);
+    border-radius: var(--ent-radius-sm);
+    background: transparent;
+    color: var(--ent-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: var(--ent-transition);
+
+    &:hover {
+        border-color: var(--ent-primary);
+        color: var(--ent-primary);
+        background: rgba(15,76,129,.04);
+    }
+
+    .ega-badge-dot {
+        position: absolute;
+        top: .3rem;
+        right: .3rem;
+        width: .5rem;
+        height: .5rem;
+        background: var(--ent-danger);
+        border-radius: 50%;
+        border: 1.5px solid #fff;
+    }
+}
+
+// Role badges
+.ega-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .28rem .65rem;
+    border-radius: var(--ent-radius-sm);
+    font-size: .72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    i { font-size: .82rem; }
+}
+
+.role-student   { background: #E3F2FD; color: #1565C0; }
+.role-lecturer  { background: #E8F5E9; color: #2E7D32; }
+.role-hod       { background: #FFF8E1; color: #F57F17; }
+.role-registrar { background: #F3E5F5; color: #6A1B9A; }
+.role-exam      { background: #FFEBEE; color: #C62828; }
+.role-qa        { background: #E0F7FA; color: #00695C; }
+.role-director  { background: #FCE4EC; color: #880E4F; }
+.role-rector    { background: #FFF3E0; color: #E65100; }
+.role-default   { background: var(--ent-bg); color: var(--ent-text-muted); }
+
+// User button
+.ega-user-btn {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    background: transparent;
+    border: 1px solid var(--ent-border);
+    border-radius: var(--ent-radius-sm);
+    padding: .28rem .65rem .28rem .35rem;
+    cursor: pointer;
+    transition: var(--ent-transition);
+
+    &:hover {
+        border-color: var(--ent-primary);
+        background: rgba(15,76,129,.04);
+    }
+}
+
+.ega-user-avatar {
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 50%;
+    background: var(--ent-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ega-user-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--ent-text);
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ega-user-caret {
+    font-size: .85rem;
+    color: var(--ent-text-light);
+}
+
+// Dropdown
+.ega-dropdown {
+    min-width: 13rem;
+    border: 1px solid var(--ent-border);
+    border-radius: var(--ent-radius);
+    box-shadow: var(--ent-shadow-md);
+    padding: .35rem;
+    margin-top: .35rem;
+}
+
+.ega-dropdown-header {
+    padding: .5rem .7rem .55rem;
+    border-bottom: 1px solid var(--ent-border-light);
+    margin-bottom: .3rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.ega-dropdown-avatar {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: var(--ent-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ega-dropdown-name {
+    font-size: .88rem;
+    font-weight: 700;
+    color: var(--ent-text);
+}
+
+.ega-dropdown-role {
+    font-size: .72rem;
+    color: var(--ent-text-muted);
+    margin-top: .1rem;
+}
+
+.ega-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .83rem;
+    font-weight: 500;
+    color: var(--ent-text);
+    border-radius: var(--ent-radius-sm);
+    padding: .45rem .7rem;
+    transition: var(--ent-transition);
+
+    i { font-size: .95rem; color: var(--ent-text-muted); }
+
+    &:hover {
+        background: var(--ent-bg);
+        color: var(--ent-primary);
+        i { color: var(--ent-primary); }
+    }
+}
+
+.ega-dropdown-logout {
+    color: var(--ent-danger) !important;
+    i { color: var(--ent-danger) !important; }
+    &:hover { background: #fef2f2 !important; }
+}
+
+// Topbar primary accent bottom border
+.ega-topnav-strip {
+    height: 2.5px;
+    background: var(--ent-primary);
+}
+
+// ── Flash alerts ─────────────────────────────────────────────────────────────
+.ega-alert {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .7rem 1rem;
+    border-radius: var(--ent-radius);
+    font-size: .86rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    i { font-size: 1.1rem; flex-shrink: 0; }
+}
+
+.ega-alert-success {
+    background: #F1F8E9;
+    border-color: #C5E1A5;
+    color: var(--ent-success);
+}
+
+.ega-alert-danger {
+    background: #FFEBEE;
+    border-color: #FFCDD2;
+    color: var(--ent-danger);
+}
+
+// ── App footer ────────────────────────────────────────────────────────────────
+.ega-app-footer {
+    border-top: 1px solid var(--ent-border);
+    background: #fff;
+    padding: .65rem 1.75rem;
+    font-size: .75rem;
+    color: var(--ent-text-light);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    i { color: var(--ent-success); font-size: .8rem; }
+}
+
+.ega-footer-divider { color: var(--ent-border); }
+
+// ── Enterprise page components ────────────────────────────────────────────────
+
+// Page header
+.ent-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.ent-page-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ent-text);
+    letter-spacing: -.02em;
+    margin: 0;
+}
+
+.ent-page-sub {
+    font-size: .82rem;
+    color: var(--ent-text-muted);
+    margin-top: .15rem;
+}
+
+.ent-page-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+// Cards
+.ent-card {
+    background: var(--ent-card);
+    border: 1px solid var(--ent-border);
+    border-radius: var(--ent-radius);
+    box-shadow: var(--ent-shadow-sm);
+}
+
+.ent-card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--ent-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.ent-card-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--ent-text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    i { color: var(--ent-primary); font-size: 1.05rem; }
+}
+
+.ent-card-body { padding: 1.25rem; }
+
+// Stat cards
+.ent-stat {
+    background: var(--ent-card);
+    border: 1px solid var(--ent-border);
+    border-radius: var(--ent-radius);
+    box-shadow: var(--ent-shadow-sm);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    transition: var(--ent-transition);
+
+    &:hover {
+        box-shadow: var(--ent-shadow);
+        transform: translateY(-1px);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: var(--ent-primary);
+        border-radius: var(--ent-radius) var(--ent-radius) 0 0;
+    }
+}
+
+.ent-stat-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: var(--ent-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.25rem;
-    margin-right: 0.75rem;
-    vertical-align: middle;
+    margin-bottom: .85rem;
+    background: rgba(15,76,129,.08);
+    color: var(--ent-primary);
 }
 
-.sidebar-menu {
-    .nav-link,
-    .sidebar-toggle {
-        color: #fff;
-        transition: all 0.2s ease;
-        border-radius: 0.75rem;
-        padding: 0.85rem 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        text-decoration: none;
+.ent-stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--ent-text);
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: .25rem;
+}
+
+.ent-stat-label {
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--ent-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.ent-stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    font-size: .75rem;
+    font-weight: 600;
+    margin-top: .5rem;
+    &.up   { color: var(--ent-success); }
+    &.down { color: var(--ent-danger);  }
+}
+
+// Color variants for stat card top border
+.ent-stat-success::after { background: var(--ent-success); }
+.ent-stat-warning::after { background: var(--ent-warning); }
+.ent-stat-danger::after  { background: var(--ent-danger);  }
+.ent-stat-info::after    { background: var(--ent-info);    }
+
+.ent-stat-success .ent-stat-icon { background: rgba(46,125,50,.1);  color: var(--ent-success); }
+.ent-stat-warning .ent-stat-icon { background: rgba(249,168,37,.1); color: var(--ent-warning); }
+.ent-stat-danger  .ent-stat-icon { background: rgba(211,47,47,.1);  color: var(--ent-danger);  }
+.ent-stat-info    .ent-stat-icon { background: rgba(2,136,209,.1);  color: var(--ent-info);    }
+
+// Table
+.ent-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead th {
+        background: var(--ent-bg);
+        color: var(--ent-text-muted);
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        padding: .7rem 1rem;
+        border-bottom: 2px solid var(--ent-border);
+        white-space: nowrap;
     }
 
-    .nav-link:hover,
-    .sidebar-toggle:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        transform: translateX(3px);
+    tbody td {
+        padding: .75rem 1rem;
+        font-size: .84rem;
+        color: var(--ent-text);
+        border-bottom: 1px solid var(--ent-border-light);
+        vertical-align: middle;
     }
 
-    .nav-link.active,
-    .sidebar-group[open] > .sidebar-toggle,
-    .sidebar-group.is-open > .sidebar-toggle {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(14, 165, 233, 0.9));
-        box-shadow: 0 10px 25px rgba(14, 165, 233, 0.18);
-        color: #fff;
-    }
-
-    .sidebar-group {
-        margin-bottom: 0.75rem;
-    }
-
-    .sidebar-group summary {
-        list-style: none;
-        cursor: pointer;
-    }
-
-    .sidebar-group summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .sidebar-group-menu {
-        margin-top: 0.6rem;
-        margin-left: 0.75rem;
-        padding-left: 0.75rem;
-        border-left: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    .sidebar-sublink {
-        font-size: 0.95rem;
-        padding: 0.7rem 0.9rem;
-        margin-bottom: 0.4rem;
-        color: rgba(255, 255, 255, 0.88);
-    }
-
-    .sidebar-caret {
-        font-size: 1rem;
-        transition: transform 0.2s ease;
-    }
-
-    .sidebar-group[open] .sidebar-caret,
-    .sidebar-group.is-open .sidebar-caret {
-        transform: rotate(180deg);
+    tbody tr {
+        transition: background .12s;
+        &:hover td { background: #F8FAFC; }
+        &:last-child td { border-bottom: none; }
     }
 }
+
+// Badges
+.ent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .22rem .6rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 600;
+    i { font-size: .78rem; }
+}
+
+.ent-badge-success { background: #E8F5E9; color: var(--ent-success); }
+.ent-badge-danger  { background: #FFEBEE; color: var(--ent-danger);  }
+.ent-badge-warning { background: #FFF8E1; color: #E65100;            }
+.ent-badge-info    { background: #E0F7FA; color: var(--ent-info);    }
+.ent-badge-primary { background: #E3F2FD; color: var(--ent-primary); }
+.ent-badge-default { background: var(--ent-bg); color: var(--ent-text-muted); }
+
+// Buttons
+.ent-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    padding: .5rem 1rem;
+    border-radius: var(--ent-radius-sm);
+    font-size: .84rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition: var(--ent-transition);
+    white-space: nowrap;
+    i { font-size: .95rem; }
+}
+
+.ent-btn-primary {
+    background: var(--ent-primary);
+    color: #fff;
+    border-color: var(--ent-primary);
+    &:hover { background: var(--ent-primary-dark); color: #fff; }
+    &:focus { box-shadow: 0 0 0 3px rgba(15,76,129,.25); }
+}
+
+.ent-btn-secondary {
+    background: var(--ent-secondary);
+    color: #fff;
+    border-color: var(--ent-secondary);
+    &:hover { background: #005048; color: #fff; }
+}
+
+.ent-btn-outline {
+    background: transparent;
+    color: var(--ent-text);
+    border-color: var(--ent-border);
+    &:hover { background: var(--ent-bg); color: var(--ent-primary); border-color: var(--ent-primary); }
+}
+
+.ent-btn-danger {
+    background: var(--ent-danger);
+    color: #fff;
+    border-color: var(--ent-danger);
+    &:hover { background: #B71C1C; color: #fff; }
+}
+
+.ent-btn-sm { padding: .35rem .75rem; font-size: .78rem; }
+.ent-btn-lg { padding: .65rem 1.35rem; font-size: .92rem; }
+
+// Forms
+.ent-form-group { margin-bottom: 1rem; }
+
+.ent-label {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--ent-text);
+    margin-bottom: .35rem;
+}
+
+.ent-input {
+    display: block;
+    width: 100%;
+    padding: .55rem .85rem;
+    font-size: .86rem;
+    color: var(--ent-text);
+    background: #fff;
+    border: 1px solid var(--ent-border);
+    border-radius: var(--ent-radius-sm);
+    transition: var(--ent-transition);
+    font-family: inherit;
+    outline: none;
+
+    &:focus {
+        border-color: var(--ent-accent);
+        box-shadow: 0 0 0 3px rgba(25,118,210,.1);
+    }
+
+    &::placeholder { color: var(--ent-text-light); }
+}
+
+// Status dot
+.ent-status-dot {
+    display: inline-block;
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    &.online  { background: var(--ent-success); }
+    &.offline { background: var(--ent-danger);  }
+    &.warning { background: var(--ent-warning); }
+}
+
+// Empty state
+.ent-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--ent-text-muted);
+    i { font-size: 2.5rem; display: block; margin-bottom: .75rem; opacity: .35; }
+    p { font-size: .88rem; margin: 0; }
+}
+
+// ── Legacy compat ─────────────────────────────────────────────────────────────
+.bg-slate    { background-color: var(--ent-sidebar) !important; }
+.app-sidebar { display: none !important; }
+.app-main    { display: none !important; }
 
 .lecturer-shell {
     position: relative;
@@ -1563,3 +2597,834 @@ $box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         flex-direction: column;
     }
 }
+
+// ─── EGA Tanzania Home Page ───────────────────────────────────────────────────
+
+$ega-blue:  #1B3A6B;
+$ega-green: #1EB53A;
+$ega-gold:  #FCD116;
+
+.ega-body {
+    background: #F5F7FA;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+// Top gov bar
+.ega-topbar {
+    background: $ega-blue;
+    color: rgba(255,255,255,.8);
+    padding: .42rem 0;
+    font-size: .78rem;
+    font-weight: 600;
+
+    .ega-topbar-text {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+}
+
+// Tanzania flag (simplified tri-color badge)
+.ega-tz-flag {
+    display: inline-flex;
+    width: 2.2rem;
+    height: 1.35rem;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.25);
+    flex-shrink: 0;
+
+    span { display: block; }
+    .f-green { background: $ega-green;  flex: 2; }
+    .f-diag  { background: $ega-gold;   flex: 1; }
+    .f-blue  { background: #009FDD;     flex: 2; }
+}
+
+// Header
+.ega-header {
+    background: #fff;
+    border-bottom: 3px solid $ega-blue;
+    padding: .9rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(27,58,107,.07);
+}
+
+.ega-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .85rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.ega-brand-img {
+    width: 2.8rem;
+    height: 2.8rem;
+    object-fit: contain;
+}
+
+.ega-brand-name {
+    font-weight: 800;
+    font-size: 1rem;
+    color: $ega-blue;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+}
+
+.ega-brand-sub {
+    font-size: .75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+%ega-nav-base {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .55rem 1.15rem;
+    border-radius: .4rem;
+    font-weight: 700;
+    font-size: .88rem;
+    text-decoration: none;
+    transition: all .18s ease;
+}
+
+.ega-nav-outline {
+    @extend %ega-nav-base;
+    border: 2px solid $ega-blue;
+    color: $ega-blue;
+    background: transparent;
+
+    &:hover { background: $ega-blue; color: #fff; }
+}
+
+.ega-nav-primary {
+    @extend %ega-nav-base;
+    background: $ega-blue;
+    color: #fff;
+    border: 2px solid $ega-blue;
+
+    &:hover { background: #142d54; color: #fff; transform: translateY(-1px); }
+}
+
+// Hero
+.ega-hero {
+    padding: 4.5rem 0 3.5rem;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    position: relative;
+}
+
+// Hero with background image
+.ega-hero--img {
+    background-image: var(--hero-bg, none);
+    background-size: cover;
+    background-position: center 30%;
+    background-repeat: no-repeat;
+    border-bottom: none;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            110deg,
+            rgba(15,23,42,.90) 0%,
+            rgba(27,58,107,.82) 55%,
+            rgba(15,23,42,.70) 100%
+        );
+        z-index: 0;
+    }
+
+    > .container-fluid { position: relative; z-index: 1; }
+}
+
+// White text variants for dark hero background
+.ega-badge--light {
+    background: rgba(255,255,255,.15);
+    border-color: rgba(255,255,255,.25);
+    color: #fff;
+}
+
+.ega-title--white { color: #fff !important; }
+
+.ega-title-accent--gold { color: $ega-gold; }
+
+.ega-title-en--light { color: rgba(255,255,255,.65); }
+
+.ega-copy--white { color: rgba(255,255,255,.82); }
+
+.ega-btn-gold {
+    background: $ega-gold !important;
+    color: #0f172a !important;
+    border: 2px solid $ega-gold !important;
+    box-shadow: 0 4px 18px rgba(252,209,22,.35) !important;
+
+    &:hover {
+        background: #e8c000 !important;
+        color: #0f172a !important;
+        border-color: #e8c000 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(252,209,22,.4) !important;
+    }
+}
+
+.ega-btn-ghost--white {
+    color: #fff !important;
+    border-color: rgba(255,255,255,.6) !important;
+
+    &:hover {
+        background: rgba(255,255,255,.12) !important;
+        color: #fff !important;
+    }
+}
+
+.ega-pill--white {
+    background: rgba(255,255,255,.12) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,.2) !important;
+}
+
+.ega-pill-title--white { color: #fff !important; }
+.ega-pill-sub--white   { color: rgba(255,255,255,.65) !important; }
+
+.ega-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .38rem .9rem;
+    background: rgba(27,58,107,.08);
+    border: 1px solid rgba(27,58,107,.15);
+    border-radius: 999px;
+    color: $ega-blue;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.ega-title {
+    font-size: clamp(2rem, 4vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -.035em;
+    color: #0f172a;
+}
+
+.ega-title-accent { color: $ega-blue; }
+
+.ega-copy {
+    color: #475569;
+    font-size: 1.04rem;
+    line-height: 1.75;
+    max-width: 38rem;
+}
+
+.ega-actions {
+    display: flex;
+    gap: .9rem;
+    flex-wrap: wrap;
+}
+
+.ega-btn-main {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .85rem 1.7rem;
+    background: $ega-blue;
+    color: #fff;
+    border-radius: .45rem;
+    font-weight: 800;
+    font-size: .98rem;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(27,58,107,.26);
+    transition: all .2s ease;
+
+    &:hover {
+        background: #142d54;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(27,58,107,.3);
+    }
+}
+
+.ega-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .85rem 1.7rem;
+    background: transparent;
+    color: $ega-blue;
+    border: 2px solid $ega-blue;
+    border-radius: .45rem;
+    font-weight: 800;
+    font-size: .98rem;
+    text-decoration: none;
+    transition: all .2s ease;
+
+    &:hover {
+        background: rgba(27,58,107,.05);
+        color: $ega-blue;
+        transform: translateY(-1px);
+    }
+}
+
+// Feature pills
+.ega-pills {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.ega-pill {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+}
+
+.ega-pill-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    background: rgba(27,58,107,.1);
+    color: $ega-blue;
+    border-radius: .5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.ega-pill-green { background: rgba(30,181,58,.1); color: #17942e; }
+.ega-pill-gold  { background: rgba(252,209,22,.15); color: #8a6b00; }
+
+.ega-pill-title { font-weight: 700; font-size: .88rem; color: #1a1a2e; line-height: 1.2; }
+.ega-pill-sub   { font-size: .75rem; color: #64748b; }
+
+// Info panel (right column)
+.ega-panel {
+    background: $ega-blue;
+    color: #fff;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 20px 50px rgba(27,58,107,.22);
+}
+
+.ega-panel-head {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: 1.4rem;
+}
+
+.ega-panel-icon {
+    width: 2.8rem;
+    height: 2.8rem;
+    background: rgba($ega-gold, .2);
+    color: $ega-gold;
+    border-radius: .6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.ega-panel-eyebrow {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.55);
+    margin-bottom: .15rem;
+}
+
+.ega-panel-title { font-size: 1.05rem; font-weight: 800; color: #fff; }
+
+.ega-panel-hr {
+    height: 1px;
+    background: rgba(255,255,255,.12);
+    margin-bottom: 1.4rem;
+}
+
+.ega-panel-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .9rem;
+    margin-bottom: 1.25rem;
+}
+
+.ega-pstat {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: .7rem;
+    padding: .9rem 1rem;
+}
+
+.ega-pstat-val {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -.04em;
+    line-height: 1.1;
+    margin-bottom: .15rem;
+}
+
+.ega-val-green { font-size: 1.05rem; color: #4ade80; }
+
+.ega-pstat-lbl {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,.5);
+    margin-bottom: .15rem;
+}
+
+.ega-pstat-note { font-size: .76rem; color: rgba(255,255,255,.55); }
+
+.ega-panel-cap {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: .7rem;
+    padding: 1rem;
+}
+
+.ega-cap-head {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,.5);
+    margin-bottom: .7rem;
+}
+
+.ega-cap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .45rem;
+}
+
+.ega-cap-row {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .86rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.9);
+
+    i { color: #4ade80; font-size: .95rem; }
+}
+
+// Title English sub-line
+.ega-title-en {
+    font-size: .95rem;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+
+// ─── Dashboard Preview Panel ──────────────────────────────────────────────────
+.ega-dash-wrap {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(27,58,107,.22);
+}
+
+// Browser chrome
+.ega-browser-bar {
+    background: #e2e8f0;
+    padding: .6rem .9rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.ega-browser-dots {
+    display: flex;
+    gap: .38rem;
+    flex-shrink: 0;
+
+    span {
+        width: .65rem;
+        height: .65rem;
+        border-radius: 50%;
+        display: block;
+    }
+    .dot-red    { background: #f87171; }
+    .dot-yellow { background: #fbbf24; }
+    .dot-green  { background: #34d399; }
+}
+
+.ega-browser-url {
+    flex: 1;
+    background: #fff;
+    border-radius: 999px;
+    padding: .28rem .9rem;
+    font-size: .75rem;
+    color: #64748b;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+
+    i { color: #22c55e; font-size: .85rem; }
+}
+
+// Dashboard body
+.ega-dash-body {
+    background: $ega-blue;
+    padding: 1.5rem;
+    color: #fff;
+}
+
+.ega-dash-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.ega-dash-eyebrow {
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    color: rgba(255,255,255,.5);
+    margin-bottom: .2rem;
+}
+
+.ega-dash-title {
+    font-size: .98rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.25;
+}
+
+.ega-dash-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: rgba($ega-gold, .2);
+    color: $ega-gold;
+    border-radius: .6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.ega-dash-hr {
+    height: 1px;
+    background: rgba(255,255,255,.1);
+    margin-bottom: 1.25rem;
+}
+
+// Circular metric
+.ega-dash-metric {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.ega-metric-ring {
+    position: relative;
+    width: 5rem;
+    height: 5rem;
+    flex-shrink: 0;
+}
+
+.ega-ring-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.ega-ring-track {
+    fill: none;
+    stroke: rgba(255,255,255,.12);
+    stroke-width: 7;
+}
+
+.ega-ring-fill {
+    fill: none;
+    stroke: $ega-green;
+    stroke-width: 7;
+    stroke-linecap: round;
+    transition: stroke-dashoffset .6s ease;
+}
+
+.ega-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ega-ring-val {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -.03em;
+}
+
+.ega-metric-title {
+    font-size: .88rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: .15rem;
+}
+
+.ega-metric-sub {
+    font-size: .75rem;
+    color: rgba(255,255,255,.55);
+    margin-bottom: .35rem;
+}
+
+.ega-metric-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #4ade80;
+    margin-bottom: .35rem;
+}
+
+.ega-metric-badge {
+    display: inline-block;
+    padding: .2rem .65rem;
+    background: rgba(74,222,128,.15);
+    border: 1px solid rgba(74,222,128,.3);
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #4ade80;
+}
+
+// Weekly bars
+.ega-dash-bars-wrap {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: .7rem;
+    padding: .85rem 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.ega-bars-label {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,.45);
+    margin-bottom: .65rem;
+}
+
+.ega-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: .5rem;
+    height: 3rem;
+}
+
+.ega-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    height: 100%;
+
+    span {
+        font-size: .65rem;
+        color: rgba(255,255,255,.45);
+        font-weight: 700;
+    }
+}
+
+.ega-bar-fill {
+    flex: 1;
+    width: 100%;
+    background: rgba(255,255,255,.2);
+    border-radius: 3px 3px 0 0;
+    align-self: flex-end;
+    max-height: 100%;
+}
+
+.ega-bar-active { background: $ega-green; }
+
+// Capabilities list inside dash
+.ega-dash-caps {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.ega-dash-cap-item {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    font-size: .84rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.9);
+}
+
+.ega-dash-cap-icon {
+    width: 2rem;
+    height: 2rem;
+    background: rgba(27,58,107,.6);
+    color: rgba(255,255,255,.8);
+    border-radius: .45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,.1);
+}
+
+.ega-cap-green { background: rgba(30,181,58,.2);  color: #4ade80;  border-color: rgba(74,222,128,.2); }
+.ega-cap-gold  { background: rgba(252,209,22,.15); color: $ega-gold; border-color: rgba(252,209,22,.2); }
+.ega-cap-teal  { background: rgba(14,165,233,.18); color: #7dd3fc;  border-color: rgba(14,165,233,.2); }
+
+@media (max-width: 767.98px) {
+    .ega-dash-body { padding: 1.25rem; }
+    .ega-metric-ring { width: 4rem; height: 4rem; }
+}
+
+// Services section
+.ega-services {
+    padding: 4rem 0;
+    background: #F5F7FA;
+}
+
+.ega-section-tag {
+    display: inline-block;
+    padding: .35rem .9rem;
+    background: rgba(27,58,107,.08);
+    border: 1px solid rgba(27,58,107,.14);
+    border-radius: 999px;
+    color: $ega-blue;
+    font-size: .78rem;
+    font-weight: 700;
+    margin-bottom: .75rem;
+}
+
+.ega-section-title {
+    font-size: clamp(1.5rem, 2.5vw, 2.1rem);
+    font-weight: 900;
+    letter-spacing: -.03em;
+    color: #0f172a;
+    margin-bottom: 0;
+}
+
+.ega-card {
+    background: #fff;
+    border-radius: .85rem;
+    padding: 2rem 1.75rem;
+    border: 1px solid #e2e8f0;
+    border-top: 4px solid transparent;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: transform .2s ease, box-shadow .2s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 34px rgba(15,23,42,.09);
+    }
+}
+
+.ega-card-blue  { border-top-color: $ega-blue; }
+.ega-card-green { border-top-color: $ega-green; }
+.ega-card-gold  { border-top-color: #e8c000; }
+
+.ega-card-icon {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: .75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.55rem;
+    margin-bottom: 1.25rem;
+
+    .ega-card-blue &  { background: rgba(27,58,107,.1);  color: $ega-blue; }
+    .ega-card-green & { background: rgba(30,181,58,.1);  color: #17942e; }
+    .ega-card-gold &  { background: rgba(252,209,22,.15); color: #8a6b00; }
+}
+
+.ega-card-title {
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: .5rem;
+}
+
+.ega-card-desc {
+    color: #64748b;
+    font-size: .93rem;
+    line-height: 1.65;
+    flex: 1;
+    margin-bottom: 1.25rem;
+}
+
+.ega-card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .88rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: $ega-blue;
+
+    .ega-card-green & { color: #158026; }
+    .ega-card-gold  & { color: #8a6b00; }
+
+    &:hover { text-decoration: underline; }
+}
+
+// Footer
+.ega-footer {
+    background: $ega-blue;
+    color: rgba(255,255,255,.75);
+    padding: 1.25rem 0;
+    margin-top: auto;
+    font-size: .85rem;
+    font-weight: 500;
+}
+
+.ega-footer-left {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    color: rgba(255,255,255,.88);
+    font-weight: 600;
+}
+
+.ega-footer-logo {
+    width: 1.9rem;
+    height: 1.9rem;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: .85;
+}
+
+.ega-footer-right {
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 767.98px) {
+    .ega-hero { padding: 3rem 0 2.5rem; }
+    .ega-pills { gap: .85rem; }
+    .ega-panel { padding: 1.5rem; }
+    .ega-actions { gap: .75rem; }
+    .ega-btn-main, .ega-btn-ghost { padding: .75rem 1.3rem; font-size: .92rem; }
+}
+

@@ -1,83 +1,99 @@
 @extends('layouts.app')
+@section('page-title', 'Dashboard — Mhadhiri')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div>
-            <div class="text-uppercase text-muted small fw-semibold mb-1">Lecturer Workspace</div>
-            <h4 class="fw-bold mb-0 text-dark">Welcome back, {{ auth()->user()->name }}</h4>
-            <p class="text-muted mb-0">Manage classes and attendance from one clean view.</p>
-        </div>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('attendanceindex') }}" class="btn btn-dark btn-sm rounded-pill px-3">
-                Manual Attendance
-            </a>
+
+<div class="ent-page-header">
+    <div>
+        <h1 class="ent-page-title">Habari, {{ auth()->user()->name }}</h1>
+        <p class="ent-page-sub">Simamia madarasa, mahudhurio na takwimu zako</p>
+    </div>
+    <div class="ent-page-actions">
+        <a href="{{ route('lecturerclasstiming') }}" class="ent-btn ent-btn-outline ent-btn-sm">
+            <i class='bx bx-time'></i> Ratiba
+        </a>
+        <a href="{{ route('lecturerireport') }}" class="ent-btn ent-btn-outline ent-btn-sm">
+            <i class='bx bx-bar-chart-alt-2'></i> Uchambuzi
+        </a>
+        <a href="{{ route('attendanceindex') }}" class="ent-btn ent-btn-primary ent-btn-sm">
+            <i class='bx bx-user-check'></i> Rekodi Mahudhurio
+        </a>
+    </div>
+</div>
+
+{{-- Stat cards --}}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat">
+            <div class="ent-stat-icon"><i class='bx bx-book'></i></div>
+            <div class="ent-stat-value">{{ $totalModules }}</div>
+            <div class="ent-stat-label">Moduli Zilizopangwa</div>
         </div>
     </div>
-
-    <div class="row g-2 mb-3">
-        <div class="col-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-1">Modules</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $totalModules }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-1">Classes</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $totalClasses }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-4">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-3">
-                    <div class="text-muted small text-uppercase fw-semibold mb-1">Students</div>
-                    <div class="fs-3 fw-bold text-dark">{{ $totalStudents }}</div>
-                </div>
-            </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat ent-stat-success">
+            <div class="ent-stat-icon"><i class='bx bx-door-open'></i></div>
+            <div class="ent-stat-value">{{ $totalClasses }}</div>
+            <div class="ent-stat-label">Jumla ya Madarasa</div>
         </div>
     </div>
-
-    <div class="card border-0 shadow-sm rounded-4 mb-3">
-        <div class="card-body p-3">
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{{ route('lecturerireport') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">Analysis</a>
-                <a href="{{ route('lecturerclasstiming') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">Timetable</a>
-                <a href="{{ route('attendanceindex') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">Manual Attendance</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-3">
-            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                <div>
-                    <h6 class="fw-bold mb-1 text-dark">Teaching Snapshot</h6>
-                    <p class="text-muted mb-0">Your assigned modules at a glance.</p>
-                </div>
-                <span class="badge text-bg-primary rounded-pill px-3 py-2">{{ $recentModules->count() }} shown</span>
-            </div>
-
-            <div class="d-grid gap-2">
-                @forelse ($recentModules as $dist)
-                    <div class="d-flex justify-content-between align-items-center border rounded-3 px-3 py-2">
-                        <div>
-                            <div class="fw-semibold text-dark">{{ $dist->module->module_name ?? 'N/A' }}</div>
-                            <div class="text-muted small">{{ $dist->module->program->program_name ?? 'N/A' }}</div>
-                        </div>
-                        <span class="badge rounded-pill text-bg-primary px-3 py-2">
-                            NTA {{ $dist->module->nta_level ?? 'N/A' }}
-                        </span>
-                    </div>
-                @empty
-                    <div class="text-center py-3 text-muted">No modules assigned yet.</div>
-                @endforelse
-            </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="ent-stat ent-stat-info">
+            <div class="ent-stat-icon"><i class='bx bx-graduation'></i></div>
+            <div class="ent-stat-value">{{ $totalStudents }}</div>
+            <div class="ent-stat-label">Wanafunzi Waliopo</div>
         </div>
     </div>
 </div>
+
+{{-- Quick links --}}
+<div class="ent-card mb-3">
+    <div class="ent-card-header">
+        <h2 class="ent-card-title"><i class='bx bx-link-alt'></i> Viungo vya Haraka</h2>
+    </div>
+    <div class="ent-card-body" style="display:flex;flex-wrap:wrap;gap:.5rem">
+        <a href="{{ route('lecturerireport') }}"    class="ent-btn ent-btn-outline ent-btn-sm"><i class='bx bx-pie-chart-alt-2'></i> Uchambuzi wa Mahudhurio</a>
+        <a href="{{ route('lecturerclasstiming') }}" class="ent-btn ent-btn-outline ent-btn-sm"><i class='bx bx-calendar-check'></i> Ratiba ya Darasa</a>
+        <a href="{{ route('attendanceindex') }}"    class="ent-btn ent-btn-outline ent-btn-sm"><i class='bx bx-pencil'></i> Mahudhurio ya Mkono</a>
+        <a href="{{ route('devices.index') }}"      class="ent-btn ent-btn-outline ent-btn-sm"><i class='bx bx-fingerprint'></i> Vifaa vya Biometric</a>
+    </div>
+</div>
+
+{{-- Modules snapshot --}}
+<div class="ent-card">
+    <div class="ent-card-header">
+        <h2 class="ent-card-title"><i class='bx bx-chalkboard'></i> Moduli Zilizopangwa</h2>
+        <span class="ent-badge ent-badge-primary">{{ $recentModules->count() }} zilizo onekana</span>
+    </div>
+    <div class="ent-card-body" style="padding:0">
+        @if($recentModules->isEmpty())
+            <div class="ent-empty">
+                <i class='bx bx-book-open'></i>
+                <p>Hakuna moduli zilizopangwa bado.</p>
+            </div>
+        @else
+            <table class="ent-table">
+                <thead>
+                    <tr>
+                        <th>Jina la Moduli</th>
+                        <th>Programu</th>
+                        <th>Kiwango NTA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($recentModules as $dist)
+                        <tr>
+                            <td style="font-weight:600">{{ $dist->module->module_name ?? 'N/A' }}</td>
+                            <td style="color:var(--ent-text-muted)">{{ $dist->module->program->program_name ?? 'N/A' }}</td>
+                            <td>
+                                <span class="ent-badge ent-badge-info">NTA {{ $dist->module->nta_level ?? '—' }}</span>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    </div>
+</div>
+
 @endsection
